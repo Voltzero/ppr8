@@ -39,6 +39,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected boolean wasRoot = false;
 
     protected Map<String, Boolean> neighboursMap;
+    protected Map<String, Map<String, Integer>> topologyMap;
 
     public BaseNode() throws JMSException {
         rand = new Random();
