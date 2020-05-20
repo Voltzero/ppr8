@@ -3,6 +3,7 @@ package distcomp;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import java.io.IOException;
+import java.util.HashMap;
 
 public class NodeA extends BaseNode {
 
@@ -85,6 +86,14 @@ public class NodeA extends BaseNode {
                 break;
             }
         }
+    }
+
+    @Override
+    protected void setNeighboursMap() {
+        neighboursMap = new HashMap<>();
+        neighboursMap.put("B",false);
+        neighboursMap.put("C",false);
+        neighboursMap.put("D",false);
     }
 
 }

@@ -1,6 +1,7 @@
 package distcomp;
 
 import javax.jms.*;
+import java.util.Map;
 import java.util.Random;
 
 public abstract class BaseNode extends Thread implements ParentNode, MessageListener {
@@ -13,6 +14,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected MessageProducer producerD;
     protected MessageProducer producerE;
     protected MessageProducer producerF;
+    protected MessageProducer producerMaster;
 
     protected MessageConsumer consumerA;
     protected MessageConsumer consumerB;
@@ -28,15 +30,15 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected Topic e;
     protected Topic f;
 
-    protected MessageProducer topicProducer;
-    protected MessageProducer producerMaster;
     protected Random rand;
     protected String nodeID = "";
-    protected String EN = "EN";
-    protected String QU = "QN";
+    protected final String EN = "EN";
+    protected final String QU = "QN";
     protected volatile String M = "";
     protected boolean root = false;
     protected boolean wasRoot = false;
+
+    protected Map<String, Boolean> neighboursMap;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -61,6 +63,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         producerE = session.createProducer(e);
         producerF = session.createProducer(f);
 
+        setNeighboursMap();
     }
 
     @Override
@@ -68,27 +71,46 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         try {
             String command = message.getStringProperty("Command");
             String id = message.getStringProperty("NodeID");
-            System.out.println(nodeID + " recived " + command + " from " + id);
-            if (!wasRoot && M.equals("") && command.equals(EN)) {
+            if (!wasRoot && M.equals("")) {
                 setMaster(id);
                 setProducerMaster(id);
                 System.out.println(nodeID + " Master is " + id);
                 sendEnWithout(id);
-            }
-            if (!M.equals("")) {
-                if (command.equals(QU)) {
-                    System.out.println(nodeID + " has Master " + M + " and recived " + command + " from " + id + " | Sending QU to " + M);
+                neighboursMap.put(id, true);
+            } else if (!M.equals("")) {
+                System.out.println(nodeID + " received " + command + " from " + id);
+                neighboursMap.put(id, true);
+
+                if (command.equals(QU))
+                    System.out.println(nodeID + " received " + command + " from " + id);
+
+                if (checkNeighbours()) {
+                    System.out.println(nodeID + " received answers from all neighbours | Sending QU to " + M);
                     sendQU(M);
                 }
-            }
-            if (wasRoot) {
-                System.out.println("Root " + nodeID + " recived " + command + " from " + id);
+            } else if (wasRoot) {
+                System.out.println("Root " + nodeID + " received " + command + " from " + id);
+
+                if (checkNeighbours())
+                    System.out.println("Root " + nodeID + " received answers from all neighbours.");
             }
             sleepRandomTime();
         } catch (JMSException e) {
             e.printStackTrace();
         }
     }
+
+    private boolean checkNeighbours() {
+        boolean check = true;
+        for (Boolean b : neighboursMap.values()) {
+            if (!b) {
+                check = false;
+                break;
+            }
+        }
+        return check;
+    }
+
     protected abstract void sendEnWithout(String NodeID) throws JMSException;
 
     protected void sendQU(String NodeID) throws JMSException {
@@ -100,6 +122,8 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     }
 
     protected abstract void setProducerMaster(String NodeID);
+
+    protected abstract void setNeighboursMap();
 
     protected void sendEN(MessageProducer producer) throws JMSException {
         Message en = session.createTextMessage();

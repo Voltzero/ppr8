@@ -3,6 +3,7 @@ package distcomp;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import java.io.IOException;
+import java.util.HashMap;
 
 public class NodeF extends BaseNode {
 
@@ -37,12 +38,8 @@ public class NodeF extends BaseNode {
 
     @Override
     public void sendEnAsRoot() throws JMSException {
-        Message en = session.createTextMessage();
-        en.setStringProperty("NodeID", nodeID);
-        en.setStringProperty("Command", EN);
-
-        producerB.send(en);
-        producerC.send(en);
+        sendEN(producerB);
+        sendEN(producerC);
     }
 
     @Override
@@ -71,5 +68,12 @@ public class NodeF extends BaseNode {
                 break;
             }
         }
+    }
+
+    @Override
+    protected void setNeighboursMap() {
+        neighboursMap = new HashMap<>();
+        neighboursMap.put("B",false);
+        neighboursMap.put("C",false);
     }
 }
