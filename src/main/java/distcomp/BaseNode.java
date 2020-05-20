@@ -1,9 +1,6 @@
 package distcomp;
 
 import javax.jms.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Random;
 
 public abstract class BaseNode extends Thread implements ParentNode {
@@ -24,40 +21,47 @@ public abstract class BaseNode extends Thread implements ParentNode {
     protected MessageConsumer consumerE;
     protected MessageConsumer consumerF;
 
-    protected MessageProducer producerAB;
-    protected MessageProducer producerAC;
-    protected MessageProducer producerAD;
-    protected MessageConsumer consumerBA;
-    protected MessageConsumer consumerCA;
-    protected MessageConsumer consumerDA;
+    protected Topic a;
+    protected Topic b;
+    protected Topic c;
+    protected Topic d;
+    protected Topic e;
+    protected Topic f;
+    /*
+        protected MessageProducer producerAB;
+        protected MessageProducer producerAC;
+        protected MessageProducer producerAD;
+        protected MessageConsumer consumerBA;
+        protected MessageConsumer consumerCA;
+        protected MessageConsumer consumerDA;
 
-    protected MessageProducer producerBA;
-    protected MessageProducer producerBD;
-    protected MessageProducer producerBF;
-    protected MessageConsumer consumerAB;
-    protected MessageConsumer consumerDB;
-    protected MessageConsumer consumerFB;
+        protected MessageProducer producerBA;
+        protected MessageProducer producerBD;
+        protected MessageProducer producerBF;
+        protected MessageConsumer consumerAB;
+        protected MessageConsumer consumerDB;
+        protected MessageConsumer consumerFB;
 
-    protected MessageProducer producerCA;
-    protected MessageProducer producerCE;
-    protected MessageProducer producerCF;
-    protected MessageConsumer consumerAC;
-    protected MessageConsumer consumerEC;
-    protected MessageConsumer consumerFC;
+        protected MessageProducer producerCA;
+        protected MessageProducer producerCE;
+        protected MessageProducer producerCF;
+        protected MessageConsumer consumerAC;
+        protected MessageConsumer consumerEC;
+        protected MessageConsumer consumerFC;
 
-    protected MessageProducer producerDA;
-    protected MessageProducer producerDB;
-    protected MessageConsumer consumerAD;
-    protected MessageConsumer consumerBD;
+        protected MessageProducer producerDA;
+        protected MessageProducer producerDB;
+        protected MessageConsumer consumerAD;
+        protected MessageConsumer consumerBD;
 
-    protected MessageProducer producerEC;
-    protected MessageConsumer consumerCE;
+        protected MessageProducer producerEC;
+        protected MessageConsumer consumerCE;
 
-    protected MessageProducer producerFB;
-    protected MessageProducer producerFC;
-    protected MessageConsumer consumerBF;
-    protected MessageConsumer consumerCF;
-
+        protected MessageProducer producerFB;
+        protected MessageProducer producerFC;
+        protected MessageConsumer consumerBF;
+        protected MessageConsumer consumerCF;
+    */
     protected MessageProducer topicProducer;
     protected MessageProducer producerMaster;
     protected Random rand;
@@ -76,6 +80,26 @@ public abstract class BaseNode extends Thread implements ParentNode {
         con.start();
 
         this.session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+        a = session.createTopic("A");
+        b = session.createTopic("B");
+        c = session.createTopic("C");
+        d = session.createTopic("D");
+        e = session.createTopic("E");
+        f = session.createTopic("F");
+
+        producerA = session.createProducer(a);
+        producerB = session.createProducer(b);
+        producerC = session.createProducer(c);
+        producerD = session.createProducer(d);
+        producerE = session.createProducer(e);
+        producerF = session.createProducer(f);
+
+        consumerB = session.createConsumer(b);
+        consumerC = session.createConsumer(c);
+        consumerD = session.createConsumer(d);
+        consumerE = session.createConsumer(e);
+        consumerF = session.createConsumer(f);
     }
 
     protected Thread CustomerListener(MessageConsumer consumer, String NodeID) {
@@ -99,7 +123,7 @@ public abstract class BaseNode extends Thread implements ParentNode {
                         }
                     }
                     if (wasRoot) {
-                            System.out.println("Root " + nodeID + " recived " + command + " from " + id);
+                        System.out.println("Root " + nodeID + " recived " + command + " from " + id);
                     }
                     sleepRandomTime();
                 } catch (JMSException e) {

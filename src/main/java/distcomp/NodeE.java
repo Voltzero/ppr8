@@ -3,7 +3,6 @@ package distcomp;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
-import javax.jms.Topic;
 import java.io.IOException;
 
 public class NodeE extends BaseNode implements ParentNode {
@@ -12,7 +11,13 @@ public class NodeE extends BaseNode implements ParentNode {
         super();
 
         nodeID = "E";
+        Queue c = session.createQueue("C");
+        Queue cc = session.createQueue("C");
 
+        producerC = session.createProducer(c);
+
+        consumerC = session.createConsumer(cc);
+/*
         Queue queueEC = session.createQueue("E-C");
         this.producerEC = session.createProducer(queueEC);
 
@@ -20,13 +25,13 @@ public class NodeE extends BaseNode implements ParentNode {
         consumerCE = session.createConsumer(queueCE);
 
         Topic topic = session.createTopic("ReportTopic");
-        topicProducer = session.createProducer(topic);
+        topicProducer = session.createProducer(topic);*/
     }
 
     @Override
     public void run() {
 
-        Thread listenC = CustomerListener(consumerCE, nodeID);
+        Thread listenC = CustomerListener(consumerC, nodeID);
 
         listenC.setDaemon(true);
 
@@ -49,7 +54,7 @@ public class NodeE extends BaseNode implements ParentNode {
         en.setStringProperty("NodeID", nodeID);
         en.setStringProperty("Command", EN);
 
-        producerEC.send(en);
+        producerC.send(en);
     }
 
     @Override
@@ -63,14 +68,14 @@ public class NodeE extends BaseNode implements ParentNode {
         qu.setStringProperty("NodeID", nodeID);
         qu.setStringProperty("Command", QU);
 
-        producerEC.send(qu);
+        producerC.send(qu);
     }
 
     @Override
     protected void setProducerMaster(String NodeID) {
         switch (NodeID) {
             case "C": {
-                producerMaster = producerEC;
+                producerMaster = producerC;
                 break;
             }
         }

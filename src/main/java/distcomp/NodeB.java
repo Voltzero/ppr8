@@ -3,7 +3,6 @@ package distcomp;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
-import javax.jms.Topic;
 import java.io.IOException;
 
 public class NodeB extends BaseNode implements ParentNode {
@@ -13,6 +12,21 @@ public class NodeB extends BaseNode implements ParentNode {
 
         nodeID = "B";
 
+        Queue a = session.createQueue("A");
+        Queue d = session.createQueue("D");
+        Queue f = session.createQueue("F");
+        Queue ac = session.createQueue("A");
+        Queue dc = session.createQueue("D");
+        Queue fc = session.createQueue("F");
+
+        producerA = session.createProducer(a);
+        producerD = session.createProducer(d);
+        producerF = session.createProducer(f);
+
+        consumerA = session.createConsumer(ac);
+        consumerD = session.createConsumer(dc);
+        consumerF = session.createConsumer(fc);
+/*
         Queue queueBA = session.createQueue("B-A");
         this.producerBA = session.createProducer(queueBA);
 
@@ -32,15 +46,15 @@ public class NodeB extends BaseNode implements ParentNode {
         consumerFB = session.createConsumer(queueFB);
 
         Topic topic = session.createTopic("ReportTopic");
-        topicProducer = session.createProducer(topic);
+        topicProducer = session.createProducer(topic);*/
     }
 
     @Override
     public void run() {
 
-        Thread listenA = CustomerListener(consumerAB, nodeID);
-        Thread listenD = CustomerListener(consumerDB, nodeID);
-        Thread listenF = CustomerListener(consumerFB, nodeID);
+        Thread listenA = CustomerListener(consumerA, nodeID);
+        Thread listenD = CustomerListener(consumerD, nodeID);
+        Thread listenF = CustomerListener(consumerF, nodeID);
 
         listenA.setDaemon(true);
         listenD.setDaemon(true);
@@ -67,27 +81,27 @@ public class NodeB extends BaseNode implements ParentNode {
         en.setStringProperty("NodeID", nodeID);
         en.setStringProperty("Command", EN);
 
-        producerBA.send(en);
-        producerBD.send(en);
-        producerBF.send(en);
+        producerA.send(en);
+        producerD.send(en);
+        producerF.send(en);
     }
 
     @Override
     protected void sendEnWithout(String NodeID) throws JMSException {
         switch (NodeID) {
             case "A": {
-                sendEN(producerBD);
-                sendEN(producerBF);
+                sendEN(producerD);
+                sendEN(producerF);
                 break;
             }
             case "F": {
-                sendEN(producerBD);
-                sendEN(producerBA);
+                sendEN(producerD);
+                sendEN(producerA);
                 break;
             }
             case "D": {
-                sendEN(producerBA);
-                sendEN(producerBF);
+                sendEN(producerA);
+                sendEN(producerF);
                 break;
             }
         }
@@ -97,15 +111,15 @@ public class NodeB extends BaseNode implements ParentNode {
     protected void setProducerMaster(String NodeID) {
         switch (NodeID) {
             case "A": {
-                producerMaster = producerBA;
+                producerMaster = producerA;
                 break;
             }
             case "F": {
-                producerMaster = producerBF;
+                producerMaster = producerF;
                 break;
             }
             case "D": {
-                producerMaster = producerBD;
+                producerMaster = producerD;
                 break;
             }
         }

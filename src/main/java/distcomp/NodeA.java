@@ -2,9 +2,7 @@ package distcomp;
 
 import javax.jms.JMSException;
 import javax.jms.Queue;
-import javax.jms.Topic;
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class NodeA extends BaseNode {
 
@@ -13,6 +11,9 @@ public class NodeA extends BaseNode {
 
         nodeID = "A";
 
+        consumerA = session.createConsumer(a);
+
+/*
         Queue queueAB = session.createQueue("A-B");
         this.producerAB = session.createProducer(queueAB);
 
@@ -32,15 +33,16 @@ public class NodeA extends BaseNode {
         consumerDA = session.createConsumer(queueDA);
 
         Topic topic = session.createTopic("ReportTopic");
-        topicProducer = session.createProducer(topic);
+        topicProducer = session.createProducer(topic);*/
+
     }
 
     @Override
     public void run() {
 
-        Thread listenB = CustomerListener(consumerBA, nodeID);
-        Thread listenC = CustomerListener(consumerCA, nodeID);
-        Thread listenD = CustomerListener(consumerDA, nodeID);
+        Thread listenB = CustomerListener(consumerB, nodeID);
+        Thread listenC = CustomerListener(consumerC, nodeID);
+        Thread listenD = CustomerListener(consumerD, nodeID);
 
         listenB.setDaemon(true);
         listenC.setDaemon(true);
@@ -63,27 +65,27 @@ public class NodeA extends BaseNode {
 
     @Override
     public void sendEnAsRoot() throws JMSException {
-        sendEN(producerAB);
-        sendEN(producerAC);
-        sendEN(producerAD);
+        sendEN(producerB);
+        sendEN(producerC);
+        sendEN(producerD);
     }
 
     @Override
     protected void sendEnWithout(String NodeID) throws JMSException {
         switch (NodeID) {
             case "B": {
-                sendEN(producerAC);
-                sendEN(producerAD);
+                sendEN(producerC);
+                sendEN(producerD);
                 break;
             }
             case "C": {
-                sendEN(producerAB);
-                sendEN(producerAD);
+                sendEN(producerB);
+                sendEN(producerD);
                 break;
             }
             case "D": {
-                sendEN(producerAB);
-                sendEN(producerAC);
+                sendEN(producerB);
+                sendEN(producerC);
                 break;
             }
         }
@@ -93,15 +95,15 @@ public class NodeA extends BaseNode {
     protected void setProducerMaster(String NodeID) {
         switch (NodeID) {
             case "B": {
-                producerMaster = producerAB;
+                producerMaster = producerB;
                 break;
             }
             case "C": {
-                producerMaster = producerAC;
+                producerMaster = producerC;
                 break;
             }
             case "D": {
-                producerMaster = producerAD;
+                producerMaster = producerD;
                 break;
             }
         }
