@@ -3,7 +3,7 @@ package distcomp;
 import javax.jms.*;
 import java.util.Random;
 
-public abstract class BaseNode extends Thread implements ParentNode {
+public abstract class BaseNode extends Thread implements ParentNode, MessageListener {
     protected Session session;
     protected Connection con;
 
@@ -27,41 +27,7 @@ public abstract class BaseNode extends Thread implements ParentNode {
     protected Topic d;
     protected Topic e;
     protected Topic f;
-    /*
-        protected MessageProducer producerAB;
-        protected MessageProducer producerAC;
-        protected MessageProducer producerAD;
-        protected MessageConsumer consumerBA;
-        protected MessageConsumer consumerCA;
-        protected MessageConsumer consumerDA;
 
-        protected MessageProducer producerBA;
-        protected MessageProducer producerBD;
-        protected MessageProducer producerBF;
-        protected MessageConsumer consumerAB;
-        protected MessageConsumer consumerDB;
-        protected MessageConsumer consumerFB;
-
-        protected MessageProducer producerCA;
-        protected MessageProducer producerCE;
-        protected MessageProducer producerCF;
-        protected MessageConsumer consumerAC;
-        protected MessageConsumer consumerEC;
-        protected MessageConsumer consumerFC;
-
-        protected MessageProducer producerDA;
-        protected MessageProducer producerDB;
-        protected MessageConsumer consumerAD;
-        protected MessageConsumer consumerBD;
-
-        protected MessageProducer producerEC;
-        protected MessageConsumer consumerCE;
-
-        protected MessageProducer producerFB;
-        protected MessageProducer producerFC;
-        protected MessageConsumer consumerBF;
-        protected MessageConsumer consumerCF;
-    */
     protected MessageProducer topicProducer;
     protected MessageProducer producerMaster;
     protected Random rand;
@@ -95,11 +61,6 @@ public abstract class BaseNode extends Thread implements ParentNode {
         producerE = session.createProducer(e);
         producerF = session.createProducer(f);
 
-        consumerB = session.createConsumer(b);
-        consumerC = session.createConsumer(c);
-        consumerD = session.createConsumer(d);
-        consumerE = session.createConsumer(e);
-        consumerF = session.createConsumer(f);
     }
 
     protected Thread CustomerListener(MessageConsumer consumer, String NodeID) {
@@ -133,6 +94,10 @@ public abstract class BaseNode extends Thread implements ParentNode {
         });
     }
 
+    @Override
+    public void onMessage(Message message) {
+
+    }
     protected abstract void sendEnWithout(String NodeID) throws JMSException;
 
     protected void sendQU(String NodeID) throws JMSException {

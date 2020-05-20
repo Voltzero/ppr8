@@ -2,7 +2,6 @@ package distcomp;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.Queue;
 import java.io.IOException;
 
 public class NodeB extends BaseNode implements ParentNode {
@@ -12,58 +11,11 @@ public class NodeB extends BaseNode implements ParentNode {
 
         nodeID = "B";
 
-        Queue a = session.createQueue("A");
-        Queue d = session.createQueue("D");
-        Queue f = session.createQueue("F");
-        Queue ac = session.createQueue("A");
-        Queue dc = session.createQueue("D");
-        Queue fc = session.createQueue("F");
-
-        producerA = session.createProducer(a);
-        producerD = session.createProducer(d);
-        producerF = session.createProducer(f);
-
-        consumerA = session.createConsumer(ac);
-        consumerD = session.createConsumer(dc);
-        consumerF = session.createConsumer(fc);
-/*
-        Queue queueBA = session.createQueue("B-A");
-        this.producerBA = session.createProducer(queueBA);
-
-        Queue queueBD = session.createQueue("B-D");
-        this.producerBD = session.createProducer(queueBD);
-
-        Queue queueBF = session.createQueue("B-F");
-        this.producerBF = session.createProducer(queueBF);
-
-        Queue queueAB = session.createQueue("A-B");
-        consumerAB = session.createConsumer(queueAB);
-
-        Queue queueDB = session.createQueue("D-B");
-        consumerDB = session.createConsumer(queueDB);
-
-        Queue queueFB = session.createQueue("F-B");
-        consumerFB = session.createConsumer(queueFB);
-
-        Topic topic = session.createTopic("ReportTopic");
-        topicProducer = session.createProducer(topic);*/
+        consumerB = session.createConsumer(b);
     }
 
     @Override
     public void run() {
-
-        Thread listenA = CustomerListener(consumerA, nodeID);
-        Thread listenD = CustomerListener(consumerD, nodeID);
-        Thread listenF = CustomerListener(consumerF, nodeID);
-
-        listenA.setDaemon(true);
-        listenD.setDaemon(true);
-        listenF.setDaemon(true);
-
-        listenA.start();
-        listenD.start();
-        listenF.start();
-
         if (root) {
             try {
                 sendEnAsRoot();

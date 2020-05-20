@@ -1,7 +1,7 @@
 package distcomp;
 
 import javax.jms.JMSException;
-import javax.jms.Queue;
+import javax.jms.Message;
 import java.io.IOException;
 
 public class NodeA extends BaseNode {
@@ -13,45 +13,10 @@ public class NodeA extends BaseNode {
 
         consumerA = session.createConsumer(a);
 
-/*
-        Queue queueAB = session.createQueue("A-B");
-        this.producerAB = session.createProducer(queueAB);
-
-        Queue queueAC = session.createQueue("A-C");
-        this.producerAC = session.createProducer(queueAC);
-
-        Queue queueAD = session.createQueue("A-D");
-        this.producerAD = session.createProducer(queueAD);
-
-        Queue queueBA = session.createQueue("B-A");
-        consumerBA = session.createConsumer(queueBA);
-
-        Queue queueCA = session.createQueue("C-A");
-        consumerCA = session.createConsumer(queueCA);
-
-        Queue queueDA = session.createQueue("D-A");
-        consumerDA = session.createConsumer(queueDA);
-
-        Topic topic = session.createTopic("ReportTopic");
-        topicProducer = session.createProducer(topic);*/
-
     }
 
     @Override
     public void run() {
-
-        Thread listenB = CustomerListener(consumerB, nodeID);
-        Thread listenC = CustomerListener(consumerC, nodeID);
-        Thread listenD = CustomerListener(consumerD, nodeID);
-
-        listenB.setDaemon(true);
-        listenC.setDaemon(true);
-        listenD.setDaemon(true);
-
-        listenB.start();
-        listenC.start();
-        listenD.start();
-
         if (root) {
             try {
                 sendEnAsRoot();
@@ -60,6 +25,14 @@ public class NodeA extends BaseNode {
             } catch (JMSException e) {
                 e.getMessage();
             }
+        }
+        try {
+            consumerA.setMessageListener(this);
+            while (true) {
+                Thread.sleep(100);
+            }
+        } catch (JMSException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -108,4 +81,5 @@ public class NodeA extends BaseNode {
             }
         }
     }
+
 }

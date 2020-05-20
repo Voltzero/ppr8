@@ -2,7 +2,6 @@ package distcomp;
 
 import javax.jms.JMSException;
 import javax.jms.Message;
-import javax.jms.Queue;
 import java.io.IOException;
 
 public class NodeE extends BaseNode implements ParentNode {
@@ -11,32 +10,12 @@ public class NodeE extends BaseNode implements ParentNode {
         super();
 
         nodeID = "E";
-        Queue c = session.createQueue("C");
-        Queue cc = session.createQueue("C");
 
-        producerC = session.createProducer(c);
-
-        consumerC = session.createConsumer(cc);
-/*
-        Queue queueEC = session.createQueue("E-C");
-        this.producerEC = session.createProducer(queueEC);
-
-        Queue queueCE = session.createQueue("C-E");
-        consumerCE = session.createConsumer(queueCE);
-
-        Topic topic = session.createTopic("ReportTopic");
-        topicProducer = session.createProducer(topic);*/
+        consumerE = session.createConsumer(e);
     }
 
     @Override
     public void run() {
-
-        Thread listenC = CustomerListener(consumerC, nodeID);
-
-        listenC.setDaemon(true);
-
-        listenC.start();
-
         if (root) {
             try {
                 sendEnAsRoot();
