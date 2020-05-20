@@ -4,6 +4,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 public class NodeE extends BaseNode {
 
@@ -13,6 +14,14 @@ public class NodeE extends BaseNode {
         nodeID = "E";
 
         consumerE = session.createConsumer(e);
+    }
+
+    public NodeE(Map<String, Map<String, Integer>> topologyMap) throws JMSException, IOException {
+        super();
+
+        nodeID = "E";
+
+        this.topologyMap = topologyMap;
     }
 
     @Override
@@ -68,6 +77,6 @@ public class NodeE extends BaseNode {
     @Override
     protected void setNeighboursMap() {
         neighboursMap = new HashMap<>();
-        neighboursMap.put("C",false);
+        neighboursMap.put("C", false);
     }
 }

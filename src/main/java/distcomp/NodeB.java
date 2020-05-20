@@ -1,9 +1,9 @@
 package distcomp;
 
 import javax.jms.JMSException;
-import javax.jms.Message;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 public class NodeB extends BaseNode {
 
@@ -14,6 +14,15 @@ public class NodeB extends BaseNode {
 
         consumerB = session.createConsumer(b);
     }
+
+    public NodeB(Map<String, Map<String, Integer>> topologyMap) throws JMSException, IOException {
+        super();
+
+        nodeID = "B";
+
+        this.topologyMap = topologyMap;
+    }
+
 
     @Override
     public void run() {
@@ -85,8 +94,8 @@ public class NodeB extends BaseNode {
     @Override
     protected void setNeighboursMap() {
         neighboursMap = new HashMap<>();
-        neighboursMap.put("A",false);
-        neighboursMap.put("F",false);
-        neighboursMap.put("D",false);
+        neighboursMap.put("A", false);
+        neighboursMap.put("F", false);
+        neighboursMap.put("D", false);
     }
 }
