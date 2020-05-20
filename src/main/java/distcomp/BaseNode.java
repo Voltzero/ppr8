@@ -2,11 +2,28 @@ package distcomp;
 
 import javax.jms.*;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
 public abstract class BaseNode extends Thread implements ParentNode {
     protected Session session;
     protected Connection con;
+
+    protected MessageProducer producerA;
+    protected MessageProducer producerB;
+    protected MessageProducer producerC;
+    protected MessageProducer producerD;
+    protected MessageProducer producerE;
+    protected MessageProducer producerF;
+
+    protected MessageConsumer consumerA;
+    protected MessageConsumer consumerB;
+    protected MessageConsumer consumerC;
+    protected MessageConsumer consumerD;
+    protected MessageConsumer consumerE;
+    protected MessageConsumer consumerF;
+
     protected MessageProducer producerAB;
     protected MessageProducer producerAC;
     protected MessageProducer producerAD;
@@ -50,9 +67,6 @@ public abstract class BaseNode extends Thread implements ParentNode {
     protected volatile String M = "";
     protected boolean root = false;
     protected boolean wasRoot = false;
-    protected volatile HashMap<MessageConsumer, Boolean> mapNeighbours;
-
-    private boolean quSent = false;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -72,23 +86,20 @@ public abstract class BaseNode extends Thread implements ParentNode {
                     String command = recived.getStringProperty("Command");
                     String id = recived.getStringProperty("NodeID");
                     System.out.println(nodeID + " recived " + command + " from " + id);
-                    if (!wasRoot && M.equals("")) {
+                    if (!wasRoot && M.equals("") && command.equals(EN)) {
                         setMaster(id);
                         setProducerMaster(id);
                         System.out.println(nodeID + " Master is " + id);
                         sendEnWithout(id);
-                        mapNeighbours.put(consumer, true);
-                    }else if (!M.equals("")) {
-                        if (!quSent) {
-                            mapNeighbours.put(consumer, true);
-                            System.out.println(nodeID + " has Master " + M + " and recived " + command + " from " + id);
+                    }
+                    if (!M.equals("")) {
+                        if (command.equals(QU)) {
+                            System.out.println(nodeID + " has Master " + M + " and recived " + command + " from " + id + " | Sending QU to " + M);
+                            sendQU(NodeID);
                         }
                     }
                     if (wasRoot) {
-                        if (!mapNeighbours.get(consumer)) {
                             System.out.println("Root " + nodeID + " recived " + command + " from " + id);
-                            mapNeighbours.put(consumer, true);
-                        }
                     }
                     sleepRandomTime();
                 } catch (JMSException e) {
@@ -96,17 +107,6 @@ public abstract class BaseNode extends Thread implements ParentNode {
                 }
             }
         });
-    }
-
-    protected boolean checkNeighbours() {
-        boolean check = true;
-        for (Boolean b : mapNeighbours.values()) {
-            if (!b) {
-                check = false;
-                break;
-            }
-        }
-        return check;
     }
 
     protected abstract void sendEnWithout(String NodeID) throws JMSException;
@@ -120,7 +120,6 @@ public abstract class BaseNode extends Thread implements ParentNode {
     }
 
     protected abstract void setProducerMaster(String NodeID);
-    protected abstract void setMapNeighbours();
 
     protected void sendEN(MessageProducer producer) throws JMSException {
         Message en = session.createTextMessage();

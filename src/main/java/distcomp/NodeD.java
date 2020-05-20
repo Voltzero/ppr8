@@ -5,7 +5,6 @@ import javax.jms.Message;
 import javax.jms.Queue;
 import javax.jms.Topic;
 import java.io.IOException;
-import java.util.HashMap;
 
 public class NodeD extends BaseNode implements ParentNode {
 
@@ -28,8 +27,6 @@ public class NodeD extends BaseNode implements ParentNode {
 
         Topic topic = session.createTopic("ReportTopic");
         topicProducer = session.createProducer(topic);
-
-        setMapNeighbours();
     }
 
     @Override
@@ -92,12 +89,5 @@ public class NodeD extends BaseNode implements ParentNode {
                 break;
             }
         }
-    }
-
-    @Override
-    protected void setMapNeighbours() {
-        mapNeighbours = new HashMap<>();
-        mapNeighbours.put(consumerAD, false);
-        mapNeighbours.put(consumerBD, false);
     }
 }

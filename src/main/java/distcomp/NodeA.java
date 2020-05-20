@@ -4,7 +4,7 @@ import javax.jms.JMSException;
 import javax.jms.Queue;
 import javax.jms.Topic;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
 
 public class NodeA extends BaseNode {
 
@@ -33,8 +33,6 @@ public class NodeA extends BaseNode {
 
         Topic topic = session.createTopic("ReportTopic");
         topicProducer = session.createProducer(topic);
-
-        setMapNeighbours();
     }
 
     @Override
@@ -60,17 +58,6 @@ public class NodeA extends BaseNode {
             } catch (JMSException e) {
                 e.getMessage();
             }
-        }
-        while(true) {
-            if (checkNeighbours()) {
-                try {
-                    sendQU(M);
-                } catch (JMSException e) {
-                    e.printStackTrace();
-                }
-                System.out.println(nodeID + "\t C E L E B R A T I O N");
-            }
-            sleepRandomTime();
         }
     }
 
@@ -118,13 +105,5 @@ public class NodeA extends BaseNode {
                 break;
             }
         }
-    }
-
-    @Override
-    protected void setMapNeighbours() {
-        mapNeighbours = new HashMap<>();
-        mapNeighbours.put(consumerBA, false);
-        mapNeighbours.put(consumerCA, false);
-        mapNeighbours.put(consumerDA, false);
     }
 }
