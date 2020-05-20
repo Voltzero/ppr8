@@ -14,7 +14,6 @@ public class NodeA extends BaseNode {
         nodeID = "A";
 
         consumerA = session.createConsumer(a);
-
     }
 
     public NodeA(Map<String, Map<String, Integer>> topologyMap) throws JMSException, IOException {
@@ -24,19 +23,12 @@ public class NodeA extends BaseNode {
 
         this.topologyMap = topologyMap;
 
+        consumerA = session.createConsumer(a);
     }
 
     @Override
     public void run() {
-        if (root) {
-            try {
-                sendEnAsRoot();
-                root = false;
-                sleepRandomTime();
-            } catch (JMSException e) {
-                e.getMessage();
-            }
-        }
+        super.run();
         try {
             consumerA.setMessageListener(this);
             while (true) {

@@ -21,19 +21,13 @@ public class NodeD extends BaseNode {
         nodeID = "D";
 
         this.topologyMap = topologyMap;
+
+        consumerD = session.createConsumer(d);
     }
 
     @Override
     public void run() {
-        if (root) {
-            try {
-                sendEnAsRoot();
-                root = false;
-                sleepRandomTime();
-            } catch (JMSException e) {
-                e.getMessage();
-            }
-        }
+        super.run();
         try {
             consumerD.setMessageListener(this);
             while (true) {

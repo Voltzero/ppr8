@@ -1,6 +1,7 @@
 package distcomp;
 
 import javax.jms.*;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
@@ -39,7 +40,9 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected boolean wasRoot = false;
 
     protected Map<String, Boolean> neighboursMap;
-    protected Map<String, Map<String, Integer>> topologyMap;
+    protected Map<String, Map<String, Integer>> topologyMap = null;
+    protected Map<Topic, String> topicStringMap;
+    protected Map<String, Integer> distances;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -57,6 +60,13 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         e = session.createTopic("E");
         f = session.createTopic("F");
 
+        topicStringMap.put(a, "A");
+        topicStringMap.put(b, "B");
+        topicStringMap.put(c, "C");
+        topicStringMap.put(d, "D");
+        topicStringMap.put(e, "E");
+        topicStringMap.put(f, "F");
+
         producerA = session.createProducer(a);
         producerB = session.createProducer(b);
         producerC = session.createProducer(c);
@@ -69,6 +79,87 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
 
     @Override
     public void onMessage(Message message) {
+        if (topologyMap == null) {
+            handleECHO(message);
+        } else {
+            routeDijkstra(message);
+        }
+    }
+
+    private void routeDijkstra(Message message) {
+
+    }
+
+    protected void setDistances() {
+        distances.put(nodeID, 0);
+        Map<String, Integer> dist = topologyMap.get(nodeID);
+        Iterator it = dist.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry) it.next();
+            distances.put(((String) pair.getKey()), ((Integer) pair.getValue()));
+        }
+    }
+
+    private boolean checkNeighbours() {
+        boolean check = true;
+        for (Boolean b : neighboursMap.values()) {
+            if (!b) {
+                check = false;
+                break;
+            }
+        }
+        return check;
+    }
+
+    protected abstract void sendEnWithout(String NodeID) throws JMSException;
+
+    protected void sendQU(String NodeID) throws JMSException {
+        Message qu = session.createTextMessage();
+        qu.setStringProperty("NodeID", nodeID);
+        qu.setStringProperty("Command", QU);
+
+        producerMaster.send(qu);
+    }
+
+    protected void sendToNode(String rootID, String receiverID) throws JMSException {
+        Message ms = session.createTextMessage();
+        ms.setStringProperty("RootID", rootID);
+        ms.setStringProperty("SenderID", nodeID);
+        ms.setStringProperty("ReceiverID", receiverID);
+
+        producerMaster.send(ms); // DO ZMIANY !!!!!!!!!!
+    }
+
+    protected abstract void setProducerMaster(String NodeID);
+
+    protected abstract void setNeighboursMap();
+
+    protected void sendEN(MessageProducer producer) throws JMSException {
+        Message en = session.createTextMessage();
+        en.setStringProperty("NodeID", nodeID);
+        en.setStringProperty("Command", EN);
+
+        producer.send(en);
+    }
+
+    protected void sleepRandomTime() {
+        try {
+            Thread.sleep((rand.nextInt(4) + 1) * 1000);
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public synchronized void setMaster(String ID) {
+        M = ID;
+    }
+
+    public synchronized void setAsRoot() {
+        root = true;
+        wasRoot = true;
+    }
+
+    private void handleECHO(Message message) {
         try {
             String command = message.getStringProperty("Command");
             String id = message.getStringProperty("NodeID");
@@ -102,53 +193,16 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         }
     }
 
-    private boolean checkNeighbours() {
-        boolean check = true;
-        for (Boolean b : neighboursMap.values()) {
-            if (!b) {
-                check = false;
-                break;
+    @Override
+    public void run() {
+        if (root) {
+            try {
+                sendEnAsRoot();
+                root = false;
+                sleepRandomTime();
+            } catch (JMSException e) {
+                e.getMessage();
             }
         }
-        return check;
-    }
-
-    protected abstract void sendEnWithout(String NodeID) throws JMSException;
-
-    protected void sendQU(String NodeID) throws JMSException {
-        Message qu = session.createTextMessage();
-        qu.setStringProperty("NodeID", nodeID);
-        qu.setStringProperty("Command", QU);
-
-        producerMaster.send(qu);
-    }
-
-    protected abstract void setProducerMaster(String NodeID);
-
-    protected abstract void setNeighboursMap();
-
-    protected void sendEN(MessageProducer producer) throws JMSException {
-        Message en = session.createTextMessage();
-        en.setStringProperty("NodeID", nodeID);
-        en.setStringProperty("Command", EN);
-
-        producer.send(en);
-    }
-
-    protected void sleepRandomTime() {
-        try {
-            Thread.sleep((rand.nextInt(4) + 1) * 1000);
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public synchronized void setMaster(String ID) {
-        M = ID;
-    }
-
-    public synchronized void setAsRoot() {
-        root = true;
-        wasRoot = true;
     }
 }
