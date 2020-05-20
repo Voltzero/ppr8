@@ -37,6 +37,11 @@ public class NodeA extends BaseNode {
     }
 
     @Override
+    public void onMessage(Message message) {
+        super.onMessage(message);
+    }
+
+    @Override
     public void sendEnAsRoot() throws JMSException {
         sendEN(producerB);
         sendEN(producerC);

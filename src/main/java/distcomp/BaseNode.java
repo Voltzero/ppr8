@@ -63,40 +63,31 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
 
     }
 
-    protected Thread CustomerListener(MessageConsumer consumer, String NodeID) {
-        return new Thread(() -> {
-            while (true) {
-                try {
-                    Message recived = (Message) consumer.receive();
-                    String command = recived.getStringProperty("Command");
-                    String id = recived.getStringProperty("NodeID");
-                    System.out.println(nodeID + " recived " + command + " from " + id);
-                    if (!wasRoot && M.equals("") && command.equals(EN)) {
-                        setMaster(id);
-                        setProducerMaster(id);
-                        System.out.println(nodeID + " Master is " + id);
-                        sendEnWithout(id);
-                    }
-                    if (!M.equals("")) {
-                        if (command.equals(QU)) {
-                            System.out.println(nodeID + " has Master " + M + " and recived " + command + " from " + id + " | Sending QU to " + M);
-                            sendQU(NodeID);
-                        }
-                    }
-                    if (wasRoot) {
-                        System.out.println("Root " + nodeID + " recived " + command + " from " + id);
-                    }
-                    sleepRandomTime();
-                } catch (JMSException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
     @Override
     public void onMessage(Message message) {
-
+        try {
+            String command = message.getStringProperty("Command");
+            String id = message.getStringProperty("NodeID");
+            System.out.println(nodeID + " recived " + command + " from " + id);
+            if (!wasRoot && M.equals("") && command.equals(EN)) {
+                setMaster(id);
+                setProducerMaster(id);
+                System.out.println(nodeID + " Master is " + id);
+                sendEnWithout(id);
+            }
+            if (!M.equals("")) {
+                if (command.equals(QU)) {
+                    System.out.println(nodeID + " has Master " + M + " and recived " + command + " from " + id + " | Sending QU to " + M);
+                    sendQU(M);
+                }
+            }
+            if (wasRoot) {
+                System.out.println("Root " + nodeID + " recived " + command + " from " + id);
+            }
+            sleepRandomTime();
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
     }
     protected abstract void sendEnWithout(String NodeID) throws JMSException;
 

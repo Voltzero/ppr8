@@ -4,7 +4,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import java.io.IOException;
 
-public class NodeE extends BaseNode implements ParentNode {
+public class NodeE extends BaseNode {
 
     public NodeE() throws JMSException, IOException {
         super();
@@ -24,6 +24,14 @@ public class NodeE extends BaseNode implements ParentNode {
             } catch (JMSException e) {
                 e.getMessage();
             }
+        }
+        try {
+            consumerE.setMessageListener(this);
+            while (true) {
+                Thread.sleep(100);
+            }
+        } catch (JMSException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
