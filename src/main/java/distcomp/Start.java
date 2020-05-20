@@ -12,6 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.TERMINATE;
@@ -57,21 +61,27 @@ public class Start {
             deleteFileOrFolder(activemqData.toPath());
         }
 
-        NodeA a = new NodeA();
-        NodeB b = new NodeB();
-        NodeC c = new NodeC();
-        NodeD d = new NodeD();
-        NodeE e = new NodeE();
-        NodeF f = new NodeF();
+        List<String> nodes = Arrays.asList("A","B","C","D","E","F");
+
+        Topology t = new Topology(nodes);
+
+        Map<String, Map<String, Integer>> topologyMap = t.generateTopologyMap();
+
+        NodeA a = new NodeA(topologyMap);
+        NodeB b = new NodeB(topologyMap);
+        NodeC c = new NodeC(topologyMap);
+        NodeD d = new NodeD(topologyMap);
+        NodeE e = new NodeE(topologyMap);
+        NodeF f = new NodeF(topologyMap);
 
         e.setAsRoot();
-
+/*
         b.start();
         c.start();
         d.start();
         e.start();
         f.start();
         a.start();
-
+*/
     }
 }

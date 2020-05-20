@@ -1,6 +1,7 @@
 package distcomp;
 
 import javax.jms.*;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -60,6 +61,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         e = session.createTopic("E");
         f = session.createTopic("F");
 
+        topicStringMap = new HashMap<>();
         topicStringMap.put(a, "A");
         topicStringMap.put(b, "B");
         topicStringMap.put(c, "C");
@@ -87,6 +89,20 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     }
 
     private void routeDijkstra(Message message) {
+        try {
+            String rootID = message.getStringProperty("RootID");
+            String senderID = message.getStringProperty("SenderID");
+            String receiverID = message.getStringProperty("ReceiverID");
+
+            System.out.println(nodeID + " got message from " + senderID + " heading towards " + receiverID + ", root " + rootID);
+
+            sleepRandomTime();
+        } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void calculateDijkstra(String endNode){
 
     }
 
