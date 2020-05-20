@@ -78,7 +78,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
                 sendEnWithout(id);
                 neighboursMap.put(id, true);
             } else if (!M.equals("")) {
-                System.out.println(nodeID + " received " + command + " from " + id);
+                //System.out.println(nodeID + " received " + command + " from " + id);
                 neighboursMap.put(id, true);
 
                 if (command.equals(QU))
@@ -90,6 +90,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
                 }
             } else if (wasRoot) {
                 System.out.println("Root " + nodeID + " received " + command + " from " + id);
+                neighboursMap.put(id, true);
 
                 if (checkNeighbours())
                     System.out.println("Root " + nodeID + " received answers from all neighbours.");
