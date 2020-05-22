@@ -40,7 +40,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected Map<String, Boolean> neighboursMap;
     protected Map<String, Map<String, Integer>> topologyMap = null;
     protected Map<String, Integer> distances;
-    protected List<ArrayList<String>> routes;
+    protected List<ArrayList<String>> routes = null;
     protected Dijkstra dijkstra;
 
     public BaseNode() throws JMSException {
@@ -122,12 +122,20 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         producerMaster.send(qu);
     }
 
-    protected void sendToNode(String rootID, String receiverID) throws JMSException {
-        routes = dijkstra.calculateShortestPaths(nodeID);
+    public void sendToNode(String rootID, String receiverID) throws JMSException {
+        if (routes == null)
+            routes = dijkstra.calculateShortestPaths(nodeID);
+
         Message ms = session.createTextMessage();
         ms.setStringProperty("RootID", rootID);
         ms.setStringProperty("SenderID", nodeID);
         ms.setStringProperty("ReceiverID", receiverID);
+
+        String node = "";
+        String previousNode = "";
+        do {
+            node = routes.get(Dijkstra.getNodeIndex(receiverID)).get(routes.get(Dijkstra.getNodeIndex(receiverID)).size() - 1);
+        } while (!node.equals(nodeID));
 
         producerMaster.send(ms); // DO ZMIANY !!!!!!!!!!
     }

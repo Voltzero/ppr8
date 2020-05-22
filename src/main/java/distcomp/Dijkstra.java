@@ -1,6 +1,7 @@
 package distcomp;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Dijkstra {
 
@@ -47,22 +48,26 @@ public class Dijkstra {
     }
 
     private void relax(DistanceToEdge v) {
-        for (Map.Entry<String, Integer> entry : topologyMap.get(v.getEgde()).entrySet()) {
-            int vertex = getNodeIndex((String) ((Map.Entry) entry).getKey());
-            int w = (Integer) ((Map.Entry) entry).getValue();
+        Map<String, Integer> sorted = topologyMap.get(v.getEgde()).entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (e1, e2) -> e1, LinkedHashMap::new));
+        for (Map.Entry<String, Integer> entry : sorted.entrySet()) {
+            int vertex = getNodeIndex((entry).getKey());
+            int w = (entry).getValue();
 
             if (distances[vertex] > (distances[getNodeIndex(v.getEgde())] + w)) {
                 distances[vertex] = (distances[getNodeIndex(v.getEgde())] + w);
-                egdes[vertex] = (String) ((Map.Entry) entry).getKey();
-                routeTracking.get(getNodeIndex((String) ((Map.Entry) entry).getKey())).add(v.getEgde());
-                DistanceToEdge dte = new DistanceToEdge((String) ((Map.Entry) entry).getKey(), distances[vertex]);
+                egdes[vertex] = (entry).getKey();
+                routeTracking.get(getNodeIndex((entry).getKey())).add(v.getEgde());
+                DistanceToEdge dte = new DistanceToEdge((entry).getKey(), distances[vertex]);
                 priorityQ.remove(dte);
                 priorityQ.offer(dte);
             }
         }
     }
 
-    private int getNodeIndex(String node) {
+    public static int getNodeIndex(String node) {
         switch (node) {
             case "A":
                 return 0;

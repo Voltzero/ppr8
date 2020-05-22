@@ -60,11 +60,13 @@ public class Start {
             deleteFileOrFolder(activemqData.toPath());
         }
 
-        List<String> nodes = Arrays.asList("A","B","C","D","E","F");
+        List<String> nodes = Arrays.asList("A", "B", "C", "D", "E", "F");
 
         Map<String, Map<String, Integer>> topologyMap = Topology.generateTopologyMap(nodes);
 
         Dijkstra dijkstra = Dijkstra.getInstance(topologyMap);
+
+        dijkstra.calculateShortestPaths("A");
 
         NodeA a = new NodeA(topologyMap);
         NodeB b = new NodeB(topologyMap);
@@ -73,13 +75,13 @@ public class Start {
         NodeE e = new NodeE(topologyMap);
         NodeF f = new NodeF(topologyMap);
 
-/*
         b.start();
         c.start();
         d.start();
         e.start();
         f.start();
         a.start();
-*/
+
+        a.sendToNode("A", "E");
     }
 }
