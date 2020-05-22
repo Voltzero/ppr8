@@ -41,9 +41,10 @@ public class Dijkstra {
         while (!priorityQ.isEmpty()) {
             relax(priorityQ.poll());
         }
-        System.out.println(Arrays.toString(distances));
-        System.out.println(Arrays.toString(egdes));
-
+        System.out.println();
+        System.out.println("                       [ A, B, C, D, E, F ]");
+        System.out.println("Shortest paths for " + sourceNode + ":   " + Arrays.toString(distances));
+        System.out.println();
         return routeTracking;
     }
 
