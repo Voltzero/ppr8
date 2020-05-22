@@ -66,8 +66,6 @@ public class Start {
 
         Dijkstra dijkstra = Dijkstra.getInstance(topologyMap);
 
-        dijkstra.calculateShortestPaths("A");
-
         NodeA a = new NodeA(topologyMap);
         NodeB b = new NodeB(topologyMap);
         NodeC c = new NodeC(topologyMap);
@@ -82,6 +80,6 @@ public class Start {
         f.start();
         a.start();
 
-        a.sendToNode("A", "E");
+        a.sendToNode("A", "F");
     }
 }

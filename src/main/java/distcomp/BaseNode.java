@@ -131,13 +131,60 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         ms.setStringProperty("SenderID", nodeID);
         ms.setStringProperty("ReceiverID", receiverID);
 
-        String node = "";
+        String node = routes.get(Dijkstra.getNodeIndex(receiverID)).get(routes.get(Dijkstra.getNodeIndex(receiverID)).size() - 1);
         String previousNode = "";
-        do {
-            node = routes.get(Dijkstra.getNodeIndex(receiverID)).get(routes.get(Dijkstra.getNodeIndex(receiverID)).size() - 1);
-        } while (!node.equals(nodeID));
+        if (node.equals(nodeID)) {
+            //wyslij bezposrednio do adresata
+            messenger(ms, receiverID);
+        } else if (isNeighbour(node)) {
+            //wyslij do sasiada (powinien miec najrotsza mozliwa trase)
+            messenger(ms, node);
+        } else {
+            //wyszukaj wierzcholek ktory prowadzi do adresata
+            do {
+                previousNode = node;
+                node = routes.get(Dijkstra.getNodeIndex(node)).get(routes.get(Dijkstra.getNodeIndex(node)).size() - 1);
+            } while (!node.equals(nodeID));
+            //wyslij do previousNode
+            messenger(ms, previousNode);
+        }
+    }
 
-        producerMaster.send(ms); // DO ZMIANY !!!!!!!!!!
+    private boolean isNeighbour(String node) {
+        return topologyMap.get(nodeID).entrySet().stream().anyMatch(entry -> (entry).getKey().equals(node));
+    }
+
+    private void messenger(Message message, String node) throws JMSException {
+        switch (node) {
+            case "A": {
+                producerA.send(message);
+                break;
+            }
+            case "B": {
+                producerB.send(message);
+                break;
+            }
+            case "C": {
+                producerC.send(message);
+                break;
+            }
+            case "D": {
+                producerD.send(message);
+                break;
+            }
+            case "E": {
+                producerE.send(message);
+                break;
+            }
+            case "F": {
+                producerF.send(message);
+                break;
+            }
+            default: {
+                System.out.println(nodeID + " is sending something into space...");
+                break;
+            }
+        }
     }
 
     protected abstract void setProducerMaster(String NodeID);
