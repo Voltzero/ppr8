@@ -63,9 +63,10 @@ public class Start {
 
         List<String> nodes = Arrays.asList("A","B","C","D","E","F");
 
-        Topology t = new Topology(nodes);
+        Map<String, Map<String, Integer>> topologyMap = Topology.generateTopologyMap(nodes);
 
-        Map<String, Map<String, Integer>> topologyMap = t.generateTopologyMap();
+        Dijkstra dijkstra = Dijkstra.getInstance(topologyMap);
+        dijkstra.calculateShortestPath("A", "F");
 
         NodeA a = new NodeA(topologyMap);
         NodeB b = new NodeB(topologyMap);

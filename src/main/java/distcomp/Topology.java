@@ -3,15 +3,10 @@ package distcomp;
 import java.util.*;
 
 public class Topology {
-    private List<String> nodes;
-    private Random rand;
+    private static Random rand;
 
-    public Topology(List<String> nodes) {
-        this.nodes = nodes;
+    public static Map<String, Map<String, Integer>> generateTopologyMap(List<String> nodes) {
         rand = new Random();
-    }
-
-    public Map<String, Map<String, Integer>> generateTopologyMap() {
         Map<String, Map<String, Integer>> map = new HashMap<>();
         for (String node : nodes) {
             int connections = rand.nextInt(nodes.size() - 2) + 1 ;

@@ -42,7 +42,6 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
 
     protected Map<String, Boolean> neighboursMap;
     protected Map<String, Map<String, Integer>> topologyMap = null;
-    protected Map<Topic, String> topicStringMap;
     protected Map<String, Integer> distances;
 
     public BaseNode() throws JMSException {
@@ -60,14 +59,6 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         d = session.createTopic("D");
         e = session.createTopic("E");
         f = session.createTopic("F");
-
-        topicStringMap = new HashMap<>();
-        topicStringMap.put(a, "A");
-        topicStringMap.put(b, "B");
-        topicStringMap.put(c, "C");
-        topicStringMap.put(d, "D");
-        topicStringMap.put(e, "E");
-        topicStringMap.put(f, "F");
 
         producerA = session.createProducer(a);
         producerB = session.createProducer(b);
