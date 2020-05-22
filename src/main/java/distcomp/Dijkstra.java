@@ -10,7 +10,6 @@ public class Dijkstra {
     private Queue<DistanceToEdge> priorityQ;
     private List<ArrayList<String>> routeTracking;
     private int[] distances;
-    private String[] egdes;
 
     private Dijkstra(Map<String, Map<String, Integer>> topologyMap) {
         this.topologyMap = topologyMap;
@@ -29,7 +28,6 @@ public class Dijkstra {
             routeTracking.add(new ArrayList<>());
         priorityQ = new PriorityQueue<>(topologyMap.size());
         distances = new int[topologyMap.size()];
-        egdes = new String[topologyMap.size()];
 
         Arrays.fill(distances, Integer.MAX_VALUE);
         distances[getNodeIndex(sourceNode)] = 0;
@@ -42,8 +40,8 @@ public class Dijkstra {
             relax(priorityQ.poll());
         }
         System.out.println();
-        System.out.println("                       [ A, B, C, D, E, F ]");
-        System.out.println("Shortest paths for " + sourceNode + ":   " + Arrays.toString(distances));
+        System.out.println("                     [ A, B, C, D, E, F ]"); // XD
+        System.out.println("Shortest paths for " + sourceNode + ": " + Arrays.toString(distances));
         System.out.println();
         return routeTracking;
     }
@@ -59,7 +57,6 @@ public class Dijkstra {
 
             if (distances[vertex] > (distances[getNodeIndex(v.getEgde())] + w)) {
                 distances[vertex] = (distances[getNodeIndex(v.getEgde())] + w);
-                egdes[vertex] = (entry).getKey();
                 routeTracking.get(getNodeIndex((entry).getKey())).add(v.getEgde());
                 DistanceToEdge dte = new DistanceToEdge((entry).getKey(), distances[vertex]);
                 priorityQ.remove(dte);
