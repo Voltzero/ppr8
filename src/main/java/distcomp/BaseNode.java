@@ -131,22 +131,27 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         ms.setStringProperty("SenderID", nodeID);
         ms.setStringProperty("ReceiverID", receiverID);
 
-        String node = routes.get(Dijkstra.getNodeIndex(receiverID)).get(routes.get(Dijkstra.getNodeIndex(receiverID)).size() - 1);
-        String previousNode = "";
-        if (node.equals(nodeID)) {
-            //wyslij bezposrednio do adresata
-            messenger(ms, receiverID);
-        } else if (isNeighbour(node)) {
-            //wyslij do sasiada (powinien miec najrotsza mozliwa trase)
-            messenger(ms, node);
+        if (routes.get(Dijkstra.getNodeIndex(receiverID)).size() != 0) {
+            String node = routes.get(Dijkstra.getNodeIndex(receiverID)).get(routes.get(Dijkstra.getNodeIndex(receiverID)).size() - 1);
+
+            String previousNode = "";
+            if (node.equals(nodeID)) {
+                //wyslij bezposrednio do adresata (najwyrazniej jestesmy sasiadem adresata i mamy najkrotsza trase)
+                messenger(ms, receiverID);
+            } else if (isNeighbour(node)) {
+                //wyslij do sasiada (powinien znajdowac sie na mozliwie najkrotszej trasie do wierzcholka docelowego)
+                messenger(ms, node);
+            } else {
+                //wyszukaj wierzcholek ktory prowadzi do adresata (ostatni wierzcholek prowadzacy do adresata nie jest sasiadem obecnego wierzcholka)
+                do {
+                    previousNode = node;
+                    node = routes.get(Dijkstra.getNodeIndex(node)).get(routes.get(Dijkstra.getNodeIndex(node)).size() - 1);
+                } while (!node.equals(nodeID));
+                //wyslij do previousNode (tzn nasz sasiad ktory znajduje sie na najkrotszej mozliwej trasie)
+                messenger(ms, previousNode);
+            }
         } else {
-            //wyszukaj wierzcholek ktory prowadzi do adresata
-            do {
-                previousNode = node;
-                node = routes.get(Dijkstra.getNodeIndex(node)).get(routes.get(Dijkstra.getNodeIndex(node)).size() - 1);
-            } while (!node.equals(nodeID));
-            //wyslij do previousNode
-            messenger(ms, previousNode);
+            System.out.println(receiverID + " is unreachable from " + nodeID);
         }
     }
 
@@ -201,7 +206,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
 
     protected void sleepRandomTime() {
         try {
-            Thread.sleep((rand.nextInt(4) + 1) * 1000);
+            Thread.sleep((rand.nextInt(7) + 1) * 1000);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
@@ -248,6 +253,27 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         } catch (JMSException e) {
             e.printStackTrace();
         }
+    }
+
+    protected Thread getSendingThread() {
+        return new Thread(() -> {
+            while (true) {
+                Random r = new Random();
+                int los = r.nextInt(100);
+                if (los > 70) {
+                    r = new Random();
+                    String rNode = Dijkstra.getNodeIDfromIndex(r.nextInt(5));
+                    if (!rNode.equals(nodeID)) {
+                        try {
+                            sendToNode(nodeID, rNode);
+                        } catch (JMSException jmsException) {
+                            jmsException.printStackTrace();
+                        }
+                    }
+                }
+                sleepRandomTime();
+            }
+        });
     }
 
     @Override

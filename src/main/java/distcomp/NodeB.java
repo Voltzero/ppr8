@@ -31,6 +31,7 @@ public class NodeB extends BaseNode {
     public void run() {
         super.run();
         try {
+            getSendingThread().start();
             consumerB.setMessageListener(this);
             while (true) {
                 Thread.sleep(100);

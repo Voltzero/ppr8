@@ -79,7 +79,5 @@ public class Start {
         e.start();
         f.start();
         a.start();
-
-        a.sendToNode("A", "F");
     }
 }

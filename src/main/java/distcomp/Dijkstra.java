@@ -23,7 +23,7 @@ public class Dijkstra {
         return instance;
     }
 
-    public List<ArrayList<String>> calculateShortestPaths(String sourceNode) {
+    public synchronized List<ArrayList<String>> calculateShortestPaths(String sourceNode) {
         routeTracking = new ArrayList<>();
         for (int i = 0; i < topologyMap.size(); i++)
             routeTracking.add(new ArrayList<>());
@@ -85,4 +85,25 @@ public class Dijkstra {
                 return -1;
         }
     }
+
+    public static String getNodeIDfromIndex(int nodeID) {
+        switch (nodeID) {
+            case 0:
+                return "A";
+            case 1:
+                return "B";
+            case 2:
+                return "C";
+            case 3:
+                return "D";
+            case 4:
+                return "E";
+            case 5:
+                return "F";
+            default:
+                return "x";
+        }
+    }
+
+
 }
