@@ -21,6 +21,7 @@ public class NodeF extends BaseNode {
         nodeID = "F";
 
         this.topologyMap = topologyMap;
+        dijkstra = Dijkstra.getInstance(topologyMap);
 
         consumerF = session.createConsumer(f);
     }

@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,6 @@ public class Start {
         Map<String, Map<String, Integer>> topologyMap = Topology.generateTopologyMap(nodes);
 
         Dijkstra dijkstra = Dijkstra.getInstance(topologyMap);
-        dijkstra.calculateShortestPath("A", "F");
 
         NodeA a = new NodeA(topologyMap);
         NodeB b = new NodeB(topologyMap);
@@ -75,7 +73,6 @@ public class Start {
         NodeE e = new NodeE(topologyMap);
         NodeF f = new NodeF(topologyMap);
 
-        e.setAsRoot();
 /*
         b.start();
         c.start();

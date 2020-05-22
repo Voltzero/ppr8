@@ -1,10 +1,7 @@
 package distcomp;
 
 import javax.jms.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public abstract class BaseNode extends Thread implements ParentNode, MessageListener {
     protected Session session;
@@ -43,6 +40,8 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected Map<String, Boolean> neighboursMap;
     protected Map<String, Map<String, Integer>> topologyMap = null;
     protected Map<String, Integer> distances;
+    protected List<ArrayList<String>> routes;
+    protected Dijkstra dijkstra;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -75,26 +74,21 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         if (topologyMap == null) {
             handleECHO(message);
         } else {
-            routeDijkstra(message);
+            try {
+                routeDijkstra(message);
+            } catch (JMSException jmsException) {
+                jmsException.printStackTrace();
+            }
         }
     }
 
-    private void routeDijkstra(Message message) {
-        try {
-            String rootID = message.getStringProperty("RootID");
-            String senderID = message.getStringProperty("SenderID");
-            String receiverID = message.getStringProperty("ReceiverID");
-
-            System.out.println(nodeID + " got message from " + senderID + " heading towards " + receiverID + ", root " + rootID);
-
-            sleepRandomTime();
-        } catch (JMSException e) {
-            e.printStackTrace();
+    private void routeDijkstra(Message message) throws JMSException {
+        if (message.getStringProperty("ReceiverID").equals(nodeID)) {
+            System.out.println(nodeID + " successfully received message from: " + message.getStringProperty("SenderID") + " message root was: " + message.getStringProperty("RootID"));
+        } else {
+            System.out.println(nodeID + " received from: " + message.getStringProperty("SenderID") + ", sending forward to: " + message.getStringProperty("ReceiverID"));
+            sendToNode(message.getStringProperty("RootID"), message.getStringProperty("ReceiverID"));
         }
-    }
-
-    private void calculateDijkstra(String endNode){
-
     }
 
     protected void setDistances() {
@@ -129,6 +123,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     }
 
     protected void sendToNode(String rootID, String receiverID) throws JMSException {
+        routes = dijkstra.calculateShortestPaths(nodeID);
         Message ms = session.createTextMessage();
         ms.setStringProperty("RootID", rootID);
         ms.setStringProperty("SenderID", nodeID);
