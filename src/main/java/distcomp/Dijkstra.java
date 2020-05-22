@@ -9,7 +9,7 @@ public class Dijkstra {
 
     private Map<String, Map<String, Integer>> topologyMap;
     private static Dijkstra instance = null;
-    private Queue<String> priorityQ;
+    private Queue<DistanceToEdge> priorityQ;
     int[] distances;
     String[] egdes;
 
@@ -31,24 +31,28 @@ public class Dijkstra {
         Arrays.fill(distances, Integer.MAX_VALUE);
         distances[getNodeIndex(sourceNode)] = 0;
 
-        priorityQ.offer(sourceNode);
+        priorityQ.offer(new DistanceToEdge(sourceNode, 0));
 
         while (!priorityQ.isEmpty()) {
             relax(priorityQ.poll());
         }
-
+        System.out.println(Arrays.toString(distances));
+        System.out.println(Arrays.toString(egdes));
         return 0;
     }
 
-    private void relax(String v) {
-        for (Map.Entry<String, Integer> entry : topologyMap.get(v).entrySet()) {
+    private void relax(DistanceToEdge v) {
+        for (Map.Entry<String, Integer> entry : topologyMap.get(v.getEgde()).entrySet()) {
             int vertex = getNodeIndex((String) ((Map.Entry) entry).getKey());
             int w = (Integer) ((Map.Entry) entry).getValue();
 
-            if(distances[vertex] > (distances[getNodeIndex(v)] + w)){
-                distances[vertex] = (distances[getNodeIndex(v)] + w);
+            if(distances[vertex] > (distances[getNodeIndex(v.getEgde())] + w)){
+                distances[vertex] = (distances[getNodeIndex(v.getEgde())] + w);
                 egdes[vertex] = (String) ((Map.Entry) entry).getKey();
 
+                DistanceToEdge dte = new DistanceToEdge((String) ((Map.Entry) entry).getKey(), distances[vertex]);
+                priorityQ.remove(dte);
+                priorityQ.offer(dte);
             }
         }
     }

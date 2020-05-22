@@ -6,12 +6,13 @@ public class Topology {
     private static Random rand;
 
     public static Map<String, Map<String, Integer>> generateTopologyMap(List<String> nodes) {
-        rand = new Random();
         Map<String, Map<String, Integer>> map = new HashMap<>();
         for (String node : nodes) {
+            rand = new Random();
             int connections = rand.nextInt(nodes.size() - 2) + 1 ;
             Map<String, Integer> randNodes = new HashMap<>();
             for (int i = 0; i < connections; i++) {
+                rand = new Random();
                 String s = nodes.get(rand.nextInt(nodes.size()));
                 int weight = rand.nextInt(9) + 1;
                 if (!s.equals(node) && !randNodes.containsKey(s))
