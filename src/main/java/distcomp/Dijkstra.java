@@ -48,6 +48,7 @@ public class Dijkstra {
                 .sorted(Map.Entry.comparingByValue())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (e1, e2) -> e1, LinkedHashMap::new));
+
         for (Map.Entry<String, Integer> entry : sorted.entrySet()) {
             int vertex = getNodeIndex((entry).getKey());
             int w = (entry).getValue();
@@ -55,9 +56,8 @@ public class Dijkstra {
             if (distances[vertex] > (distances[getNodeIndex(v.getEgde())] + w)) {
                 distances[vertex] = (distances[getNodeIndex(v.getEgde())] + w);
                 previous[getNodeIndex((entry).getKey())] = v.getEgde();
-                DistanceToEdge dte = new DistanceToEdge((entry).getKey(), distances[vertex]);
-                priorityQ.remove(dte);
-                priorityQ.offer(dte);
+
+                priorityQ.offer(new DistanceToEdge((entry).getKey(), distances[vertex]));
             }
         }
     }
