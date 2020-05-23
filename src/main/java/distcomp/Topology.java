@@ -1,6 +1,9 @@
 package distcomp;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public class Topology {
     private static Random rand;
@@ -9,7 +12,7 @@ public class Topology {
         Map<String, Map<String, Integer>> map = new HashMap<>();
         for (String node : nodes) {
             rand = new Random();
-            int connections = rand.nextInt(nodes.size() - 2) + 1 ;
+            int connections = rand.nextInt(nodes.size() - 2) + 1;
             Map<String, Integer> randNodes = new HashMap<>();
             for (int i = 0; i < connections; i++) {
                 rand = new Random();
@@ -22,16 +25,12 @@ public class Topology {
             }
             map.put(node, randNodes);
         }
-        Iterator it = map.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry pair = (Map.Entry) it.next();
-            String n = (String) pair.getKey();
-            Map<String, Integer> visual = (Map<String, Integer>) pair.getValue();
+        for (Map.Entry<String, Map<String, Integer>> mapEntry : map.entrySet()) {
+            String n = mapEntry.getKey();
+            Map<String, Integer> visual = mapEntry.getValue();
             System.out.print(n + ": ");
-            Iterator itr = visual.entrySet().iterator();
-            while (itr.hasNext()) {
-                Map.Entry v = (Map.Entry) itr.next();
-                System.out.print(v.getKey() + " (" + v.getValue() + "), ");
+            for (Map.Entry<String, Integer> entry : visual.entrySet()) {
+                System.out.print(entry.getKey() + " (" + entry.getValue() + "), ");
             }
             System.out.println();
         }
