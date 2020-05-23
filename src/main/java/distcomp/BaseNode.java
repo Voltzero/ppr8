@@ -41,6 +41,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected Map<String, Map<String, Integer>> topologyMap = null;
     protected Map<String, Integer> distances;
     protected List<ArrayList<String>> routes = null;
+    protected String[] previousNode = null;
     protected Dijkstra dijkstra;
 
     public BaseNode() throws JMSException {
@@ -123,32 +124,29 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     }
 
     public void sendToNode(String rootID, String receiverID) throws JMSException {
-        if (routes == null)
-            routes = dijkstra.calculateShortestPaths(nodeID);
+        if (previousNode == null)
+            previousNode = dijkstra.calculateShortestPaths(nodeID);
 
         Message ms = session.createTextMessage();
         ms.setStringProperty("RootID", rootID);
         ms.setStringProperty("SenderID", nodeID);
         ms.setStringProperty("ReceiverID", receiverID);
 
-        if (routes.get(Dijkstra.getNodeIndex(receiverID)).size() != 0) {
-            String node = routes.get(Dijkstra.getNodeIndex(receiverID)).get(routes.get(Dijkstra.getNodeIndex(receiverID)).size() - 1);
+        if (previousNode[Dijkstra.getNodeIndex(receiverID)] != null) {
+            String node = previousNode[Dijkstra.getNodeIndex(receiverID)];
 
-            String previousNode = "";
             if (node.equals(nodeID)) {
-                //wyslij bezposrednio do adresata (najwyrazniej jestesmy sasiadem adresata i mamy najkrotsza trase)
-                messenger(ms, receiverID);
+                messenger(ms, receiverID);  // send directly to "receiver"
             } else if (isNeighbour(node)) {
-                //wyslij do sasiada (powinien znajdowac sie na mozliwie najkrotszej trasie do wierzcholka docelowego)
-                messenger(ms, node);
+                messenger(ms, node);        // send to neighbour node, it should belong to the best possible route to "receiver"
             } else {
-                //wyszukaj wierzcholek ktory prowadzi do adresata (ostatni wierzcholek prowadzacy do adresata nie jest sasiadem obecnego wierzcholka)
+                String previous = "";       // seek for neighbour node that leads to the "receiver"
                 do {
-                    previousNode = node;
-                    node = routes.get(Dijkstra.getNodeIndex(node)).get(routes.get(Dijkstra.getNodeIndex(node)).size() - 1);
+                    previous = node;
+                    node = previousNode[Dijkstra.getNodeIndex(node)];
                 } while (!node.equals(nodeID));
-                //wyslij do previousNode (tzn nasz sasiad ktory znajduje sie na najkrotszej mozliwej trasie)
-                messenger(ms, previousNode);
+
+                messenger(ms, previous);
             }
         } else {
             System.out.println(receiverID + " is unreachable from " + nodeID);

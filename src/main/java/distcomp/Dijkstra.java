@@ -5,10 +5,10 @@ import java.util.stream.Collectors;
 
 public class Dijkstra {
 
-    private Map<String, Map<String, Integer>> topologyMap;
+    private final Map<String, Map<String, Integer>> topologyMap;
     private static Dijkstra instance = null;
     private Queue<DistanceToEdge> priorityQ;
-    private List<ArrayList<String>> routeTracking;
+    private String[] previous;
     private int[] distances;
 
     private Dijkstra(Map<String, Map<String, Integer>> topologyMap) {
@@ -22,10 +22,8 @@ public class Dijkstra {
         return instance;
     }
 
-    public synchronized List<ArrayList<String>> calculateShortestPaths(String sourceNode) {
-        routeTracking = new ArrayList<>();
-        for (int i = 0; i < topologyMap.size(); i++)
-            routeTracking.add(new ArrayList<>());
+    public synchronized String[] calculateShortestPaths(String sourceNode) {
+        previous = new String[topologyMap.size()];
         priorityQ = new PriorityQueue<>(topologyMap.size());
         distances = new int[topologyMap.size()];
 
@@ -34,16 +32,15 @@ public class Dijkstra {
 
         priorityQ.offer(new DistanceToEdge(sourceNode, 0));
 
-        routeTracking.get(getNodeIndex(sourceNode)).add(sourceNode);
-
         while (!priorityQ.isEmpty()) {
             relax(priorityQ.poll());
         }
         System.out.println();
         System.out.println("                     [ A, B, C, D, E, F ]"); // XD
         System.out.println("Shortest paths for " + sourceNode + ": " + Arrays.toString(distances));
+        System.out.println("Previous nodes:      " + Arrays.toString(previous));
         System.out.println();
-        return routeTracking;
+        return previous;
     }
 
     private void relax(DistanceToEdge v) {
@@ -57,7 +54,7 @@ public class Dijkstra {
 
             if (distances[vertex] > (distances[getNodeIndex(v.getEgde())] + w)) {
                 distances[vertex] = (distances[getNodeIndex(v.getEgde())] + w);
-                routeTracking.get(getNodeIndex((entry).getKey())).add(v.getEgde());
+                previous[getNodeIndex((entry).getKey())] = v.getEgde();
                 DistanceToEdge dte = new DistanceToEdge((entry).getKey(), distances[vertex]);
                 priorityQ.remove(dte);
                 priorityQ.offer(dte);
