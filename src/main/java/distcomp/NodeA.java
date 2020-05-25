@@ -18,15 +18,7 @@ public class NodeA extends BaseNode {
 
     @Override
     public void run() {
-        if (root) {
-            try {
-                sendEnAsRoot();
-                root = false;
-                sleepRandomTime();
-            } catch (JMSException e) {
-                e.getMessage();
-            }
-        }
+        super.run();
         try {
             consumerA.setMessageListener(this);
             while (true) {

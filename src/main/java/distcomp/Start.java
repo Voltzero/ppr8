@@ -52,6 +52,13 @@ public static void deleteFileOrFolder(final Path path) throws IOException {
             deleteFileOrFolder(activemqData.toPath());
         }
 
+        //          D
+        //        /   \
+        //       A --- B
+        //         \     \
+        //    E --- C --- F
+        //
+
         NodeA a = new NodeA();
         NodeB b = new NodeB();
         NodeC c = new NodeC();
@@ -67,29 +74,6 @@ public static void deleteFileOrFolder(final Path path) throws IOException {
         e.start();
         f.start();
         a.start();
-
-        /*
-        final ProcessE processE = new ProcessE();
-        processE.start();
-        
-        final ProcessA processA = new ProcessA();
-        final ProcessB processB = new ProcessB();
-        final ProcessC processC = new ProcessC();
-        final ProcessD processD = new ProcessD();
-        processA.start();
-        processB.start();
-        processC.start();
-        processD.start();
-
-        System.out.println("Press enter to exit.");
-        System.in.read();
-
-        processA.destroy();
-        processB.destroy();
-        processC.destroy();
-        processD.destroy();
-        processE.destroy();*/
-
 
     }
 }
