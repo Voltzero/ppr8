@@ -17,7 +17,7 @@ public class Topology {
             for (int i = 0; i < connections; i++) {
                 rand = new Random();
                 String s = nodes.get(rand.nextInt(nodes.size()));
-                int weight = rand.nextInt(9) + 1;
+                int weight = 1;
                 if (!s.equals(node) && !randNodes.containsKey(s))
                     randNodes.put(s, weight);
                 else

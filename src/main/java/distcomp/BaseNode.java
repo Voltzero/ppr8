@@ -43,6 +43,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected List<ArrayList<String>> routes = null;
     protected String[] previousNode = null;
     protected Dijkstra dijkstra;
+    protected MaxID maxID;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -68,6 +69,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         producerF = session.createProducer(f);
 
         setNeighboursMap();
+        generateMaxID();
     }
 
     @Override
@@ -208,6 +210,10 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
+    }
+
+    protected void generateMaxID() {
+        maxID = new MaxID(nodeID, rand.nextInt(9) + 1);
     }
 
     public synchronized void setMaster(String ID) {
