@@ -36,8 +36,9 @@ public class NodeF extends BaseNode {
         dijkstra = new Dijkstra(topologyMap, nodeID);
         previousNode = dijkstra.calculateShortestPaths(nodeID);
         diameter = dijkstra.getDiam();
+        this.floodMax = floodMax;
 
-        consumerA = session.createConsumer(f);
+        consumerF = session.createConsumer(f);
         if (floodMax)
             generateMaxID();
     }
@@ -46,7 +47,7 @@ public class NodeF extends BaseNode {
     public void run() {
         super.run();
         try {
-            getSendingThread().start();
+            //getSendingThread().start();
             consumerF.setMessageListener(this);
             while (true) {
                 Thread.sleep(100);

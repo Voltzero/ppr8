@@ -45,6 +45,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected Dijkstra dijkstra;
     protected MaxID maxID = null;
     protected int diameter;
+    protected boolean floodMax = false;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -93,19 +94,46 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
 
     private void floodMax(Message message) throws JMSException {
         String msRoot = message.getStringProperty("RootID");
+        String node = message.getStringProperty("NodeID");
+        int lvl = message.getIntProperty("NodeLVL");
         int count = message.getIntProperty("Countdown");
-        if (count == 1) {
-            String node = message.getStringProperty("NodeID");
-            if (!node.equals(this.nodeID)) {
-                int lvl = message.getIntProperty("NodeLVL");
-                if (maxID.getNodeLvl() < lvl) {
-                    maxID.setNodeID(node);
-                    maxID.setNodeLvl(lvl);
-                    System.out.println("Node " + nodeID + " received flood from " + msRoot + " and now " + nodeID + " has new MAXID: [ " + node + ", " + lvl + " ]");
-                    floodNodes(nodeID, node, lvl, diameter);
-                }
+
+        if (count > 1)
+            floodNodes(nodeID, node, lvl, count - 1, msRoot);
+
+        if (!node.equals(this.nodeID)) {
+            if (maxID.getNodeLvl() < lvl) {
+                maxID.setNodeID(node);
+                maxID.setNodeLvl(lvl);
+                System.out.println("Node " + nodeID + " received flood from " + msRoot + " and now has new MAXID: [ " + node + ", " + lvl + " ]");
+                floodNodes(nodeID, node, lvl, diameter, msRoot);
             }
         }
+
+    }
+
+    public void floodNodes(String rootID, String nodeID, int nodeLvl, int countdown) throws JMSException {
+        Message ms = session.createTextMessage();
+        ms.setStringProperty("RootID", rootID);
+        ms.setStringProperty("NodeID", nodeID);
+        ms.setIntProperty("NodeLVL", nodeLvl);
+        ms.setIntProperty("Countdown", countdown);
+
+        for (String s : previousNode)
+            if (isNeighbour(s))
+                messenger(ms, s);
+    }
+
+    public void floodNodes(String rootID, String nodeID, int nodeLvl, int countdown, String except) throws JMSException {
+        Message ms = session.createTextMessage();
+        ms.setStringProperty("RootID", rootID);
+        ms.setStringProperty("NodeID", nodeID);
+        ms.setIntProperty("NodeLVL", nodeLvl);
+        ms.setIntProperty("Countdown", countdown);
+
+        for (String s : previousNode)
+            if (isNeighbour(s) && !s.equals(except))
+                messenger(ms, s);
     }
 
     private void routeDijkstra(Message message) throws JMSException {
@@ -178,22 +206,6 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         }
     }
 
-    public void floodNodes(String rootID, String nodeID, int nodeLvl, int countdown) throws JMSException {
-        if (previousNode == null)
-            previousNode = dijkstra.calculateShortestPaths(nodeID);
-
-        Message ms = session.createTextMessage();
-        ms.setStringProperty("RootID", rootID);
-        ms.setStringProperty("NodeID", nodeID);
-        ms.setIntProperty("NodeLVL", nodeLvl);
-        ms.setIntProperty("Countdown", countdown);
-
-        for (String s : previousNode)
-            if (isNeighbour(s))
-                messenger(ms, s);
-
-    }
-
     private boolean isNeighbour(String node) {
         return topologyMap.get(nodeID).entrySet().stream().anyMatch(entry -> (entry).getKey().equals(node));
     }
@@ -245,14 +257,14 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
 
     protected void sleepRandomTime() {
         try {
-            Thread.sleep((rand.nextInt(7) + 1) * 1000);
+            Thread.sleep((rand.nextInt(5) + 1) * 1000);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
     }
 
     protected void generateMaxID() {
-        maxID = new MaxID(nodeID, rand.nextInt(9) + 1);
+        maxID = new MaxID(nodeID, rand.nextInt(19) + 1);
     }
 
     public synchronized void setMaster(String ID) {
@@ -328,6 +340,15 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
                 sleepRandomTime();
             } catch (JMSException e) {
                 e.getMessage();
+            }
+        }
+        if (floodMax) {
+            try {
+                floodNodes(nodeID, maxID.getNodeID(), maxID.getNodeLvl(), diameter);
+                floodMax = false;
+                sleepRandomTime();
+            } catch (JMSException jmsException) {
+                jmsException.printStackTrace();
             }
         }
     }
