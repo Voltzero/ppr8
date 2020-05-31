@@ -64,14 +64,12 @@ public class Start {
 
         Map<String, Map<String, Integer>> topologyMap = Topology.generateTopologyMap(nodes);
 
-        Dijkstra dijkstra = Dijkstra.getInstance(topologyMap);
-
-        NodeA a = new NodeA(topologyMap);
-        NodeB b = new NodeB(topologyMap);
-        NodeC c = new NodeC(topologyMap);
-        NodeD d = new NodeD(topologyMap);
-        NodeE e = new NodeE(topologyMap);
-        NodeF f = new NodeF(topologyMap);
+        NodeA a = new NodeA(topologyMap, true);
+        NodeB b = new NodeB(topologyMap, true);
+        NodeC c = new NodeC(topologyMap, true);
+        NodeD d = new NodeD(topologyMap, true);
+        NodeE e = new NodeE(topologyMap, true);
+        NodeF f = new NodeF(topologyMap, true);
 
         b.start();
         c.start();

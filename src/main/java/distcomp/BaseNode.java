@@ -43,7 +43,8 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected List<ArrayList<String>> routes = null;
     protected String[] previousNode = null;
     protected Dijkstra dijkstra;
-    protected MaxID maxID;
+    protected MaxID maxID = null;
+    protected int diameter;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -69,18 +70,40 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         producerF = session.createProducer(f);
 
         setNeighboursMap();
-        generateMaxID();
     }
 
     @Override
     public void onMessage(Message message) {
         if (topologyMap == null) {
             handleECHO(message);
-        } else {
+        } else if (maxID == null) {
             try {
                 routeDijkstra(message);
             } catch (JMSException jmsException) {
                 jmsException.printStackTrace();
+            }
+        } else {
+            try {
+                floodMax(message);
+            } catch (JMSException jmsException) {
+                jmsException.printStackTrace();
+            }
+        }
+    }
+
+    private void floodMax(Message message) throws JMSException {
+        String msRoot = message.getStringProperty("RootID");
+        int count = message.getIntProperty("Countdown");
+        if (count == 1) {
+            String node = message.getStringProperty("NodeID");
+            if (!node.equals(this.nodeID)) {
+                int lvl = message.getIntProperty("NodeLVL");
+                if (maxID.getNodeLvl() < lvl) {
+                    maxID.setNodeID(node);
+                    maxID.setNodeLvl(lvl);
+                    System.out.println("Node " + nodeID + " received flood from " + msRoot + " and now " + nodeID + " has new MAXID: [ " + node + ", " + lvl + " ]");
+                    floodNodes(nodeID, node, lvl, diameter);
+                }
             }
         }
     }
@@ -153,6 +176,22 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         } else {
             System.out.println(receiverID + " is unreachable from " + nodeID);
         }
+    }
+
+    public void floodNodes(String rootID, String nodeID, int nodeLvl, int countdown) throws JMSException {
+        if (previousNode == null)
+            previousNode = dijkstra.calculateShortestPaths(nodeID);
+
+        Message ms = session.createTextMessage();
+        ms.setStringProperty("RootID", rootID);
+        ms.setStringProperty("NodeID", nodeID);
+        ms.setIntProperty("NodeLVL", nodeLvl);
+        ms.setIntProperty("Countdown", countdown);
+
+        for (String s : previousNode)
+            if (isNeighbour(s))
+                messenger(ms, s);
+
     }
 
     private boolean isNeighbour(String node) {

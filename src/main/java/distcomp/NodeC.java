@@ -21,9 +21,25 @@ public class NodeC extends BaseNode {
         nodeID = "C";
 
         this.topologyMap = topologyMap;
-        dijkstra = Dijkstra.getInstance(topologyMap);
+        dijkstra = new Dijkstra(topologyMap, nodeID);
+        previousNode = dijkstra.calculateShortestPaths(nodeID);
 
         consumerC = session.createConsumer(c);
+    }
+
+    public NodeC(Map<String, Map<String, Integer>> topologyMap, boolean floodMax) throws JMSException, IOException {
+        super();
+
+        nodeID = "C";
+
+        this.topologyMap = topologyMap;
+        dijkstra = new Dijkstra(topologyMap, nodeID);
+        previousNode = dijkstra.calculateShortestPaths(nodeID);
+        diameter = dijkstra.getDiam();
+
+        consumerA = session.createConsumer(c);
+        if (floodMax)
+            generateMaxID();
     }
 
     @Override

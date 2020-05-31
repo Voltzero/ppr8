@@ -6,20 +6,26 @@ import java.util.stream.Collectors;
 public class Dijkstra {
 
     private final Map<String, Map<String, Integer>> topologyMap;
-    private static Dijkstra instance = null;
     private Queue<DistanceToEdge> priorityQ;
     private String[] previous;
     private int[] distances;
+    private String node;
+    private boolean calculated = false;
 
-    private Dijkstra(Map<String, Map<String, Integer>> topologyMap) {
+    public Dijkstra(Map<String, Map<String, Integer>> topologyMap) {
         this.topologyMap = topologyMap;
     }
 
-    public static synchronized Dijkstra getInstance(Map<String, Map<String, Integer>> topologyMap) {
-        if (instance == null) {
-            instance = new Dijkstra(topologyMap);
+    public Dijkstra(Map<String, Map<String, Integer>> topologyMap, String node) {
+        this.topologyMap = topologyMap;
+        this.node = node;
+    }
+
+    public synchronized int getDiam() {
+        if (!calculated) {
+            calculateShortestPaths(node);
         }
-        return instance;
+        return Arrays.stream(distances).max().getAsInt();
     }
 
     public synchronized String[] calculateShortestPaths(String sourceNode) {
@@ -40,6 +46,7 @@ public class Dijkstra {
         System.out.println("Shortest paths for " + sourceNode + ": " + Arrays.toString(distances));
         System.out.println("Previous nodes:      " + Arrays.toString(previous));
         System.out.println();
+        calculated = true;
         return previous;
     }
 
