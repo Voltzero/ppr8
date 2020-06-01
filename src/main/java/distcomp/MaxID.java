@@ -27,4 +27,9 @@ public class MaxID {
     public int getNodeLvl() {
         return nodeLvl;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        return (((MaxID) obj).getNodeID().equals(this.nodeID) && ((MaxID) obj).getNodeLvl() == this.nodeLvl);
+    }
 }
