@@ -64,6 +64,8 @@ public class Start {
 
         Map<String, Map<String, Integer>> topologyMap = Topology.generateTopologyMap(nodes);
 
+        new Reports().start();
+
         NodeA a = new NodeA(topologyMap, true);
         NodeB b = new NodeB(topologyMap, true);
         NodeC c = new NodeC(topologyMap, true);

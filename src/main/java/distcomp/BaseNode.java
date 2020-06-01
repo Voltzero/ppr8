@@ -101,7 +101,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
                     if (message.propertyExists("Countdown")) {
                         int count = message.getIntProperty("Countdown");
                         if (count == Integer.MAX_VALUE)
-                            System.out.println("Node " + nodeID + ": Message from " + message.getStringProperty("RootID") + " seems to be corrupted...");
+                            sendReport("Node " + nodeID + ": Message from " + message.getStringProperty("RootID") + " seems to be corrupted...");
                         else {
                             floodCheck = true;
                             floodMax(message);
@@ -120,7 +120,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         int count = message.getIntProperty("Countdown");
 
         if (lvl < maxID.getNodeLvl()) {
-            System.out.println("Node " + nodeID + " has higher MAXID [" + maxID.getNodeID() + "] than current LEADER...");
+            sendReport("Node " + nodeID + " has higher MAXID [" + maxID.getNodeID() + "] than current LEADER...");
             floodNodes(nodeID, maxID.getNodeID(), maxID.getNodeLvl(), diameter);
         } else {
             maxID.setNodeID(leader);
@@ -144,7 +144,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
 
             if (checkNeighbours() && !LEADER_FLAG) {
                 LEADER_FLAG = true;
-                System.out.println("\t\t\t\t\t\t\t\tNode " + nodeID + " is now the LEADER");
+                sendReport("\t\t\t\t\t\t\t\tNode " + nodeID + " is now the LEADER");
                 sendOBEY(nodeID, maxID.getNodeLvl(), diameter);
             }
         } else {
@@ -163,14 +163,20 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
             if (isNeighbour(s) && !alreadySent.contains(s)) {
                 alreadySent.add(s);
                 messenger(ms, s);
-                System.out.println("Node " + nodeID + " sends OBEY to " + s);
+                sendReport("Node " + nodeID + " sends OBEY to " + s);
+                //System.out.println("Node " + nodeID + " sends OBEY to " + s);
             }
     }
 
-    public void rejectLeader() {
+    private void sendReport(String s) throws JMSException {
+        Message ms = session.createTextMessage(s);
+        producerReport.send(ms);
+    }
+
+    public void rejectLeader() throws JMSException {
         setFloodNeighboursMap();
         LEADER_FLAG = false;
-        System.out.println("\t\t\t\t\t\t\tNode " + nodeID + " is no longer a LEADER");
+        sendReport("\t\t\t\t\t\t\tNode " + nodeID + " is no longer a LEADER");
     }
 
     private void floodMax(Message message) throws JMSException {
@@ -187,7 +193,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
                 maxID.setNodeID(node);
                 maxID.setNodeLvl(lvl);
                 //sb.append(" and now has new MAXID: [ ").append(node).append(", ").append(lvl).append(" ]");
-                System.out.println("Node " + nodeID + " received flood from " + msRoot + " and now has new MAXID: [ " + node + ", " + lvl + " ]");
+                sendReport("Node " + nodeID + " received flood from " + msRoot + " and now has new MAXID: [ " + node + ", " + lvl + " ]");
 
                 if (LEADER_FLAG)
                     rejectLeader();
@@ -207,7 +213,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         ms.setStringProperty("LEADER", leaderID);
         ms.setStringProperty("RootID", rootID);
         ms.setStringProperty("NodeID", nodeID);
-        System.out.println("Node " + nodeID + " elects leader " + leaderID);
+        sendReport("Node " + nodeID + " elects leader " + leaderID);
         sendUsingDijkstra(leaderID, ms);
     }
 
@@ -229,7 +235,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
                 messenger(ms, previous);
             }
         } else {
-            System.out.println(receiverID + " is unreachable from " + nodeID);
+            sendReport(receiverID + " is unreachable from " + nodeID);
         }
     }
 
@@ -381,14 +387,14 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         }
     }
 
-    protected void generateMaxID(int r) {
+    protected void generateMaxID(int r) throws JMSException {
         if (maxID == null)
             maxID = new MaxID(nodeID, rand.nextInt(r) + 1);
         else {
             MaxID tmp = new MaxID(nodeID, rand.nextInt(r) + 1);
             if (tmp.getNodeLvl() > maxID.getNodeLvl()) {
                 maxID = tmp;
-                System.out.println("Node " + nodeID + " generated new MAXID LVL [ " + maxID.getNodeLvl() + " ]");
+                sendReport("Node " + nodeID + " generated new MAXID LVL [ " + maxID.getNodeLvl() + " ]");
             }
         }
     }
@@ -468,8 +474,8 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
                     if (estimated > 10) {
                         System.out.println(nodeID + " waited over 10 seconds, generating new maxID...");
                         randLVLBound += 10;
-                        generateMaxID(randLVLBound);
                         try {
+                            generateMaxID(randLVLBound);
                             floodNodes(nodeID, maxID.getNodeID(), maxID.getNodeLvl(), diameter);
                         } catch (JMSException jmsException) {
                             jmsException.printStackTrace();

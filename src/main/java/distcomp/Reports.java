@@ -23,7 +23,12 @@ public class Reports extends Thread implements MessageListener {
 
     @Override
     public void onMessage(Message message) {
-
+        try {
+            TextMessage tx = (TextMessage) message;
+            System.out.println(tx.getText());
+        } catch (JMSException jmsException) {
+            jmsException.printStackTrace();
+        }
     }
 
     @Override
