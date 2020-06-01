@@ -36,6 +36,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected volatile String M = "";
     protected boolean root = false;
     protected boolean wasRoot = false;
+    protected volatile boolean LEADER_FLAG = false;
 
     protected Map<String, Boolean> neighboursMap;
     protected Map<String, Map<String, Integer>> topologyMap = null;
@@ -87,11 +88,42 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
             }
         } else {
             try {
-                floodCheck = true;
-                floodMax(message);
+                if (message.propertyExists("LEADER")) {
+                    handleLeader(message);
+                } else {
+                    if (message.propertyExists("Countdown")) {
+                        int count = message.getIntProperty("Countdown");
+                        if (count == Integer.MAX_VALUE)
+                            System.out.println("Node " + nodeID + ": Message from " + message.getStringProperty("RootID") + " seems to be corrupted...");
+                        else {
+                            floodCheck = true;
+                            floodMax(message);
+                        }
+                    }
+                }
             } catch (JMSException jmsException) {
                 jmsException.printStackTrace();
             }
+        }
+    }
+
+    private void handleLeader(Message message) throws JMSException {
+        String leader = message.getStringProperty("LEADER");
+        String neighbour = message.getStringProperty("NodeID");
+        String msRoot = message.getStringProperty("RootID");
+        System.out.println("\t\tNode " + nodeID + " received LEADER from " + neighbour + " rooted in " + msRoot);
+        if (nodeID.equals(leader)) {
+            if (isNeighbour(msRoot))
+                neighboursMap.put(msRoot, true);
+            else
+                neighboursMap.put(neighbour, true);
+
+            if (checkNeighbours()) {
+                LEADER_FLAG = true;
+                System.out.println("Node " + nodeID + " is now the LEADER");
+            }
+        } else {
+            electLeader(msRoot, leader);
         }
     }
 
@@ -101,27 +133,59 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         int lvl = message.getIntProperty("NodeLVL");
         int count = message.getIntProperty("Countdown");
 
-        //StringBuilder sb = new StringBuilder();
-        //sb.append("Node ").append(nodeID).append(" received flood from ").append(msRoot).append(" countdown: ").append(count);
-        boolean flooded = false;
+        StringBuilder sb = new StringBuilder();
+        sb.append("Node ").append(nodeID).append(" received flood from ").append(msRoot).append(" countdown: ").append(count);
+        //boolean flooded = false;
 
         if (!node.equals(this.nodeID)) {
             if (maxID.getNodeLvl() < lvl) {
                 maxID.setNodeID(node);
                 maxID.setNodeLvl(lvl);
-                //sb.append(" and now has new MAXID: [ ").append(node).append(", ").append(lvl).append(" ]");
-                System.out.println("Node " + nodeID + " received flood from " + msRoot + " and now has new MAXID: [ " + node + ", " + lvl + " ]");
-                flooded = true;
-                floodNodes(nodeID, node, lvl, diameter, msRoot);
+                sb.append(" and now has new MAXID: [ ").append(node).append(", ").append(lvl).append(" ]");
+                //System.out.println("Node " + nodeID + " received flood from " + msRoot + " and now has new MAXID: [ " + node + ", " + lvl + " ]");
+                //flooded = true;
+                electLeader(nodeID, node);
+                floodNodes(nodeID, node, lvl, count - 1, msRoot);
             }
         }
-
-        if (count > 0) {
+/*
+        if (count > 0 && lvl >= maxID.getNodeLvl()) {
             if (!flooded)
                 floodNodes(nodeID, node, lvl, count - 1, msRoot);
         }
+*/
+        System.out.println(sb.toString());
+    }
 
-        //System.out.println(sb.toString());
+    private void electLeader(String rootID, String leaderID) throws JMSException {
+        Message ms = session.createTextMessage();
+        ms.setStringProperty("LEADER", leaderID);
+        ms.setStringProperty("RootID", rootID);
+        ms.setStringProperty("NodeID", nodeID);
+        System.out.println("Node " + nodeID + " elects leader " + leaderID);
+        sendUsingDijkstra(leaderID, ms);
+    }
+
+    private void sendUsingDijkstra(String receiverID, Message ms) throws JMSException {
+        if (previousNode[Dijkstra.getNodeIndex(receiverID)] != null) {
+            String node = previousNode[Dijkstra.getNodeIndex(receiverID)];
+
+            if (node.equals(nodeID)) {
+                messenger(ms, receiverID);  // send directly to "receiver"
+            } else if (isNeighbour(node)) {
+                messenger(ms, node);        // send to neighbour node, it should belong to the best possible route to "receiver"
+            } else {
+                String previous = "";       // seek for neighbour node that leads to the "receiver"
+                do {
+                    previous = node;
+                    node = previousNode[Dijkstra.getNodeIndex(node)];
+                } while (!node.equals(nodeID));
+
+                messenger(ms, previous);
+            }
+        } else {
+            System.out.println(receiverID + " is unreachable from " + nodeID);
+        }
     }
 
     public void floodNodes(String rootID, String nodeID, int nodeLvl, int countdown) throws JMSException {
@@ -131,9 +195,13 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         ms.setIntProperty("NodeLVL", nodeLvl);
         ms.setIntProperty("Countdown", countdown);
 
+        List<String> alreadySent = new ArrayList<>();
         for (String s : previousNode)
-            if (isNeighbour(s))
+            if (isNeighbour(s) && !alreadySent.contains(s)) {
+                alreadySent.add(s);
                 messenger(ms, s);
+                System.out.println("Node " + nodeID + " sends flood to " + s + " Root: " + rootID);
+            }
     }
 
     public void floodNodes(String rootID, String nodeID, int nodeLvl, int countdown, String except) throws JMSException {
@@ -143,9 +211,13 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         ms.setIntProperty("NodeLVL", nodeLvl);
         ms.setIntProperty("Countdown", countdown);
 
+        List<String> alreadySent = new ArrayList<>();
         for (String s : previousNode)
-            if (isNeighbour(s) && !s.equals(except))
+            if (s != null && !s.equals(except) && !alreadySent.contains(s) && isNeighbour(s)) {
+                alreadySent.add(s);
                 messenger(ms, s);
+                System.out.println("Node " + nodeID + " sends flood to " + s + " Root: " + rootID);
+            }
     }
 
     private void routeDijkstra(Message message) throws JMSException {
@@ -197,25 +269,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         ms.setStringProperty("SenderID", nodeID);
         ms.setStringProperty("ReceiverID", receiverID);
 
-        if (previousNode[Dijkstra.getNodeIndex(receiverID)] != null) {
-            String node = previousNode[Dijkstra.getNodeIndex(receiverID)];
-
-            if (node.equals(nodeID)) {
-                messenger(ms, receiverID);  // send directly to "receiver"
-            } else if (isNeighbour(node)) {
-                messenger(ms, node);        // send to neighbour node, it should belong to the best possible route to "receiver"
-            } else {
-                String previous = "";       // seek for neighbour node that leads to the "receiver"
-                do {
-                    previous = node;
-                    node = previousNode[Dijkstra.getNodeIndex(node)];
-                } while (!node.equals(nodeID));
-
-                messenger(ms, previous);
-            }
-        } else {
-            System.out.println(receiverID + " is unreachable from " + nodeID);
-        }
+        sendUsingDijkstra(receiverID, ms);
     }
 
     private boolean isNeighbour(String node) {
@@ -258,6 +312,15 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected abstract void setProducerMaster(String NodeID);
 
     protected abstract void setNeighboursMap();
+
+    protected void setFloodNeighboursMap() {
+        neighboursMap = new HashMap<>();
+        for (String s : previousNode) {
+            if (s != null && s.equals(nodeID)) {
+                neighboursMap.put(s, false);
+            }
+        }
+    }
 
     protected void sendEN(MessageProducer producer) throws JMSException {
         Message en = session.createTextMessage();
@@ -390,10 +453,10 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         if (floodMax) {
             try {
                 System.out.println("Node " + nodeID + " begins with maxID of LVL: " + maxID.getNodeLvl());
+                sleepRandomTime();
                 floodNodes(nodeID, maxID.getNodeID(), maxID.getNodeLvl(), diameter);
                 floodMax = false;
                 getFloodCheckingThread().start();
-                sleepRandomTime();
             } catch (JMSException jmsException) {
                 jmsException.printStackTrace();
             }

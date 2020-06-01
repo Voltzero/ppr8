@@ -36,6 +36,7 @@ public class NodeE extends BaseNode {
         this.topologyMap = topologyMap;
         dijkstra = new Dijkstra(topologyMap, nodeID);
         previousNode = dijkstra.calculateShortestPaths(nodeID);
+        setFloodNeighboursMap();
         diameter = dijkstra.getDiam();
         this.floodMax = floodMax;
 

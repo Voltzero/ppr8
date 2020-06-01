@@ -25,7 +25,12 @@ public class Dijkstra {
         if (!calculated) {
             calculateShortestPaths(node);
         }
-        return Arrays.stream(distances).max().getAsInt();
+        int result = 0;
+        for (int i : distances) {
+            if (i != Integer.MAX_VALUE && i > result)
+                result = i;
+        }
+        return result;
     }
 
     public synchronized String[] calculateShortestPaths(String sourceNode) {
