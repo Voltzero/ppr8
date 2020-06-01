@@ -46,6 +46,8 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected MaxID maxID = null;
     protected int diameter;
     protected boolean floodMax = false;
+    protected volatile boolean floodCheck = false;
+    protected int randLVLBound = 9;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -85,6 +87,7 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
             }
         } else {
             try {
+                floodCheck = true;
                 floodMax(message);
             } catch (JMSException jmsException) {
                 jmsException.printStackTrace();
@@ -98,18 +101,27 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         int lvl = message.getIntProperty("NodeLVL");
         int count = message.getIntProperty("Countdown");
 
-        if (count > 1)
-            floodNodes(nodeID, node, lvl, count - 1, msRoot);
+        //StringBuilder sb = new StringBuilder();
+        //sb.append("Node ").append(nodeID).append(" received flood from ").append(msRoot).append(" countdown: ").append(count);
+        boolean flooded = false;
 
         if (!node.equals(this.nodeID)) {
             if (maxID.getNodeLvl() < lvl) {
                 maxID.setNodeID(node);
                 maxID.setNodeLvl(lvl);
+                //sb.append(" and now has new MAXID: [ ").append(node).append(", ").append(lvl).append(" ]");
                 System.out.println("Node " + nodeID + " received flood from " + msRoot + " and now has new MAXID: [ " + node + ", " + lvl + " ]");
+                flooded = true;
                 floodNodes(nodeID, node, lvl, diameter, msRoot);
             }
         }
 
+        if (count > 0) {
+            if (!flooded)
+                floodNodes(nodeID, node, lvl, count - 1, msRoot);
+        }
+
+        //System.out.println(sb.toString());
     }
 
     public void floodNodes(String rootID, String nodeID, int nodeLvl, int countdown) throws JMSException {
@@ -263,8 +275,8 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         }
     }
 
-    protected void generateMaxID() {
-        maxID = new MaxID(nodeID, rand.nextInt(19) + 1);
+    protected void generateMaxID(int r) {
+        maxID = new MaxID(nodeID, rand.nextInt(r) + 1);
     }
 
     public synchronized void setMaster(String ID) {
@@ -331,6 +343,39 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         });
     }
 
+    protected Thread getFloodCheckingThread() {
+        return new Thread(() -> {
+            long start = System.currentTimeMillis();
+            long estimated;
+            while (true) {
+                if (!floodCheck) {
+                    estimated = System.currentTimeMillis() - start;
+                    estimated /= 1000;
+                    if (estimated > 10) {
+                        System.out.println(nodeID + " waited over 10 seconds, generating new maxID...");
+                        randLVLBound += 10;
+                        generateMaxID(randLVLBound);
+                        try {
+                            floodNodes(nodeID, maxID.getNodeID(), maxID.getNodeLvl(), diameter);
+                        } catch (JMSException jmsException) {
+                            jmsException.printStackTrace();
+                        }
+                        sleepRandomTime();
+                        start = System.currentTimeMillis();
+                    }
+                } else {
+                    start = System.currentTimeMillis();
+                    floodCheck = false;
+                }
+                try {
+                    Thread.sleep((rand.nextInt(5) + 3) * 100);
+                } catch (InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+    }
+
     @Override
     public void run() {
         if (root) {
@@ -344,8 +389,10 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
         }
         if (floodMax) {
             try {
+                System.out.println("Node " + nodeID + " begins with maxID of LVL: " + maxID.getNodeLvl());
                 floodNodes(nodeID, maxID.getNodeID(), maxID.getNodeLvl(), diameter);
                 floodMax = false;
+                getFloodCheckingThread().start();
                 sleepRandomTime();
             } catch (JMSException jmsException) {
                 jmsException.printStackTrace();

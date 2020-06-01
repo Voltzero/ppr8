@@ -40,7 +40,7 @@ public class NodeB extends BaseNode {
 
         consumerB = session.createConsumer(b);
         if (floodMax)
-            generateMaxID();
+            generateMaxID(randLVLBound);
     }
 
     @Override
