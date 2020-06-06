@@ -52,6 +52,10 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
     protected boolean floodMax = false;
     protected volatile boolean floodCheck = false;
     protected int randLVLBound = 9;
+    protected String COORDINATOR;
+    protected String CRITICAL;
+    protected boolean isCoord = false;
+    protected boolean isCritical = false;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -83,6 +87,15 @@ public abstract class BaseNode extends Thread implements ParentNode, MessageList
 
     @Override
     public void onMessage(Message message) {
+
+        if (isCoord) {
+
+        } else if (isCritical) {
+
+        } else {
+
+        }
+
         if (topologyMap == null) {
             handleECHO(message);
         } else if (maxID == null) {

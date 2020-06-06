@@ -44,6 +44,21 @@ public class NodeF extends BaseNode {
             generateMaxID(randLVLBound);
     }
 
+    public NodeF(String COORD, String CRITICAL) throws JMSException {
+        super();
+
+        nodeID = "F";
+
+        this.COORDINATOR = COORD;
+        this.CRITICAL = CRITICAL;
+
+        if (nodeID.equals(COORDINATOR))
+            isCoord = true;
+        if (nodeID.equals(CRITICAL))
+            isCritical = true;
+
+    }
+
     @Override
     public void run() {
         super.run();

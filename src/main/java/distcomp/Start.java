@@ -62,8 +62,8 @@ public class Start {
 
         List<String> nodes = Arrays.asList("A", "B", "C", "D", "E", "F");
 
-        Map<String, Map<String, Integer>> topologyMap = Topology.generateTopologyMap(nodes);
-
+        Map<String, Map<String, Integer>> topologyMap = Topology.generateCriticalCoord(nodes);
+/*
         new Reports().start();
 
         NodeA a = new NodeA(topologyMap, true);
@@ -78,6 +78,6 @@ public class Start {
         d.start();
         e.start();
         f.start();
-        a.start();
+        a.start();*/
     }
 }
