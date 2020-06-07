@@ -63,21 +63,21 @@ public class Start {
         List<String> nodes = Arrays.asList("A", "B", "C", "D", "E", "F");
 
         Map<String, Map<String, Integer>> topologyMap = Topology.generateCriticalCoord(nodes);
-/*
+
         new Reports().start();
 
-        NodeA a = new NodeA(topologyMap, true);
-        NodeB b = new NodeB(topologyMap, true);
-        NodeC c = new NodeC(topologyMap, true);
-        NodeD d = new NodeD(topologyMap, true);
-        NodeE e = new NodeE(topologyMap, true);
-        NodeF f = new NodeF(topologyMap, true);
+        NodeA a = new NodeA("A", "B");
+        NodeB b = new NodeB("A", "B");
+        NodeC c = new NodeC("A", "B");
+        NodeD d = new NodeD("A", "B");
+        NodeE e = new NodeE("A", "B");
+        NodeF f = new NodeF("A", "B");
 
         b.start();
         c.start();
         d.start();
         e.start();
         f.start();
-        a.start();*/
+        a.start();
     }
 }

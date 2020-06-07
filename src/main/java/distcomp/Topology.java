@@ -33,12 +33,8 @@ public class Topology {
         Map<String, Map<String, Integer>> map = new HashMap<>();
         int weight = 1;
         rand = new Random();
-        String coord = nodes.get(rand.nextInt(nodes.size()));
-        String critical = coord;
-        do {
-            critical = nodes.get(rand.nextInt(nodes.size()));
-        } while (critical.equals(coord));
-
+        String coord = "A";
+        String critical = "B";
         Map<String, Integer> coordNodes = new HashMap<>();
         for (String node : nodes) {
             if (!node.equals(coord)) {
