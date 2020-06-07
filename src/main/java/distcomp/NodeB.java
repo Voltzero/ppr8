@@ -18,6 +18,7 @@ public class NodeB extends BaseNode {
 
         nodeID = "B";
 
+        consumerB = session.createConsumer(b);
         this.COORDINATOR = COORD;
         this.CRITICAL = CRITICAL;
 

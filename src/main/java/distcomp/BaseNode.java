@@ -2,7 +2,8 @@ package distcomp;
 
 import javax.jms.*;
 import java.util.Queue;
-import java.util.*;
+import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class BaseNode extends Thread implements MessageListener {
     protected Session session;
@@ -40,6 +41,7 @@ public abstract class BaseNode extends Thread implements MessageListener {
     protected boolean isCritical = false;
     protected Queue<String> queueToCritical;
     private volatile boolean waitingForResponse = false;
+    private volatile boolean criticalAvailable = true;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -69,26 +71,92 @@ public abstract class BaseNode extends Thread implements MessageListener {
 
     @Override
     public void onMessage(Message message) {
-
         if (isCoord) {
-
+            try {
+                if (message.propertyExists("GetAccess")) {
+                    synchronized (queueToCritical) {
+                        queueToCritical.offer(message.getStringProperty("GetAccess"));
+                        //sendReport("Queue: " + Arrays.toString(queueToCritical.toArray()));
+                    }
+                }
+                if (message.propertyExists("Available")) {
+                    criticalAvailable = true;
+                }
+            } catch (JMSException jmsException) {
+                jmsException.printStackTrace();
+            }
         } else if (isCritical) {
-
+            try {
+                if (message.propertyExists("Critical")) {
+                    String node = message.getStringProperty("NodeID");
+                    sendReport(message.getStringProperty("Critical"));
+                    Thread.sleep(1500);
+                    communicateCritical(node, nodeID + " says Hello to node " + node);
+                    Thread.sleep(1500);
+                    communicateCritical(node, nodeID + " says that's it for now to " + node + "\n");
+                    Thread.sleep(500);
+                    rejectAccess(node);
+                    notifyCoord();
+                }
+            } catch (JMSException | InterruptedException e) {
+                e.printStackTrace();
+            }
         } else {
-
+            try {
+                if (message.propertyExists("Response")) {
+                    if (message.getBooleanProperty("Response")) {
+                        communicateCritical(CRITICAL, nodeID + " says Hello to critical " + CRITICAL);
+                    }
+                }
+                if (message.propertyExists("Critical")) {
+                    sendReport(message.getStringProperty("Critical"));
+                }
+                if (message.propertyExists("Reject")) {
+                    if (message.getBooleanProperty("Reject")) {
+                        waitingForResponse = false;
+                        sendReport(nodeID + " was rejected\n");
+                    }
+                }
+            } catch (JMSException jmsException) {
+                jmsException.printStackTrace();
+            }
         }
     }
 
     private void askForPermission() throws JMSException {
         Message ms = session.createTextMessage();
-        ms.setStringProperty("NodeID", nodeID);
-
+        ms.setStringProperty("GetAccess", nodeID);
         messenger(ms, COORDINATOR);
+    }
+
+    private void grantAccess(String node) throws JMSException {
+        Message ms = session.createTextMessage();
+        ms.setBooleanProperty("Response", true);
+        messenger(ms, node);
+    }
+
+    private void rejectAccess(String node) throws JMSException {
+        Message ms = session.createTextMessage();
+        ms.setBooleanProperty("Reject", true);
+        messenger(ms, node);
     }
 
     private void sendReport(String s) throws JMSException {
         Message ms = session.createTextMessage(s);
         producerReport.send(ms);
+    }
+
+    private void notifyCoord() throws JMSException {
+        Message ms = session.createTextMessage();
+        ms.setBooleanProperty("Available", true);
+        messenger(ms, COORDINATOR);
+    }
+
+    private void communicateCritical(String node, String message) throws JMSException {
+        Message ms = session.createTextMessage();
+        ms.setStringProperty("Critical", message);
+        ms.setStringProperty("NodeID", nodeID);
+        messenger(ms, node);
     }
 
     private void messenger(Message message, String node) throws JMSException {
@@ -148,10 +216,35 @@ public abstract class BaseNode extends Thread implements MessageListener {
         });
     }
 
+    protected Thread getAvailabilityThread() {
+        return new Thread(() -> {
+            while (true) {
+                if (criticalAvailable) {
+                    synchronized (queueToCritical) {
+                        if (!queueToCritical.isEmpty()) {
+                            try {
+                                grantAccess(queueToCritical.poll());
+                                criticalAvailable = false;
+                            } catch (JMSException jmsException) {
+                                System.out.println("Problem z przydzielaniem dostępu do sekcji krytycznej.");
+                            }
+                        }
+                    }
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+            }
+        });
+    }
+
     @Override
     public void run() {
         if (isCoord) {
-            queueToCritical = new PriorityQueue<>();
+            queueToCritical = new ConcurrentLinkedQueue<>();
+            getAvailabilityThread().start();
         } else if (isCritical) {
 
         } else {
