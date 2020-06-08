@@ -1,6 +1,7 @@
 package distcomp;
 
 import javax.jms.*;
+import java.util.Arrays;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -76,7 +77,7 @@ public abstract class BaseNode extends Thread implements MessageListener {
                 if (message.propertyExists("GetAccess")) {
                     synchronized (queueToCritical) {
                         queueToCritical.offer(message.getStringProperty("GetAccess"));
-                        //sendReport("Queue: " + Arrays.toString(queueToCritical.toArray()));
+                        sendReport("\t\t\t\t\t\t\t\tQueue: " + Arrays.toString(queueToCritical.toArray()));
                     }
                 }
                 if (message.propertyExists("Available")) {
