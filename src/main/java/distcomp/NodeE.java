@@ -49,7 +49,6 @@ public class NodeE extends BaseNode {
     public void run() {
         super.run();
         try {
-            //getSendingThread().start();
             consumerE.setMessageListener(this);
             while (true) {
                 Thread.sleep(100);

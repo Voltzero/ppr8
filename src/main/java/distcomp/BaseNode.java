@@ -1,9 +1,7 @@
 package distcomp;
 
 import javax.jms.*;
-import java.util.Queue;
 import java.util.Random;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class BaseNode extends Thread implements MessageListener {
     protected Session session;
@@ -39,7 +37,6 @@ public abstract class BaseNode extends Thread implements MessageListener {
     protected String CRITICAL;
     protected boolean isCoord = false;
     protected boolean isCritical = false;
-    protected Queue<String> queueToCritical;
     private volatile boolean waitingForResponse = false;
     private volatile boolean criticalAvailable = true;
     protected volatile double weight;
@@ -74,72 +71,29 @@ public abstract class BaseNode extends Thread implements MessageListener {
     public void onMessage(Message message) {
         if (isCoord) {
             try {
-                if (message.propertyExists("GetAccess")) {
-                    synchronized (queueToCritical) {
-                        queueToCritical.offer(message.getStringProperty("GetAccess"));
-                        //sendReport("Queue: " + Arrays.toString(queueToCritical.toArray()));
+                if (message.propertyExists("Done")) {
+                    this.weight += message.getDoubleProperty("Done");
+                    sendReport("Coordinator " + nodeID + " has received DONE from " + message.getStringProperty("NodeID") + " with weight: " + message.getDoubleProperty("Done"));
+                    if (weight == 1d) {
+                        sendReport("\n\t\t\t\t\tCoordinator " + nodeID + " has finished distributed calculating... Let's do another round\n");
+                        getJobThread().start();
                     }
-                }
-                if (message.propertyExists("Available")) {
-                    criticalAvailable = true;
                 }
             } catch (JMSException jmsException) {
                 jmsException.printStackTrace();
             }
-        } else if (isCritical) {
-            try {
-                if (message.propertyExists("Critical")) {
-                    String node = message.getStringProperty("NodeID");
-                    sendReport(message.getStringProperty("Critical"));
-                    Thread.sleep(1500);
-                    communicateCritical(node, nodeID + " says Hello to node " + node);
-                    Thread.sleep(1500);
-                    communicateCritical(node, nodeID + " says that's it for now to " + node + "\n");
-                    Thread.sleep(500);
-                    rejectAccess(node);
-                    notifyCoord();
-                }
-            } catch (JMSException | InterruptedException e) {
-                e.printStackTrace();
-            }
         } else {
             try {
-                if (message.propertyExists("Response")) {
-                    if (message.getBooleanProperty("Response")) {
-                        communicateCritical(CRITICAL, nodeID + " says Hello to critical " + CRITICAL);
-                    }
-                }
-                if (message.propertyExists("Critical")) {
-                    sendReport(message.getStringProperty("Critical"));
-                }
-                if (message.propertyExists("Reject")) {
-                    if (message.getBooleanProperty("Reject")) {
-                        waitingForResponse = false;
-                        sendReport(nodeID + " was rejected\n");
-                    }
+                if (message.propertyExists("Job")) {
+                    this.weight = message.getDoubleProperty("Job");
+                    sendReport(nodeID + " has received JOB with weight " + weight);
+                    sleepRandomTime();
+                    notifyCoord();
                 }
             } catch (JMSException jmsException) {
                 jmsException.printStackTrace();
             }
         }
-    }
-
-    private void askForPermission() throws JMSException {
-        Message ms = session.createTextMessage();
-        ms.setStringProperty("GetAccess", nodeID);
-        messenger(ms, COORDINATOR);
-    }
-
-    private void grantAccess(String node) throws JMSException {
-        Message ms = session.createTextMessage();
-        ms.setBooleanProperty("Response", true);
-        messenger(ms, node);
-    }
-
-    private void rejectAccess(String node) throws JMSException {
-        Message ms = session.createTextMessage();
-        ms.setBooleanProperty("Reject", true);
-        messenger(ms, node);
     }
 
     private void sendReport(String s) throws JMSException {
@@ -149,14 +103,20 @@ public abstract class BaseNode extends Thread implements MessageListener {
 
     private void notifyCoord() throws JMSException {
         Message ms = session.createTextMessage();
-        ms.setBooleanProperty("Available", true);
+        ms.setDoubleProperty("Done", weight);
+        ms.setStringProperty("NodeID", nodeID);
         messenger(ms, COORDINATOR);
+        this.weight = 0;
     }
 
-    private void communicateCritical(String node, String message) throws JMSException {
+    private void giveJob(String node) throws JMSException {
+        double w;
+        do {
+            w = rand.nextDouble();
+        } while (w >= weight);
+        this.weight -= w;
         Message ms = session.createTextMessage();
-        ms.setStringProperty("Critical", message);
-        ms.setStringProperty("NodeID", nodeID);
+        ms.setDoubleProperty("Job", w);
         messenger(ms, node);
     }
 
@@ -195,47 +155,23 @@ public abstract class BaseNode extends Thread implements MessageListener {
 
     protected void sleepRandomTime() {
         try {
-            Thread.sleep((rand.nextInt(5) + 1) * 1000);
+            Thread.sleep((rand.nextInt(6) + 2) * 1000);
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
     }
 
-    protected Thread getAskingThread() {
+    protected Thread getJobThread() {
         return new Thread(() -> {
-            while (true) {
-                sleepRandomTime();
-                if (!waitingForResponse) {
-                    try {
-                        askForPermission();
-                        waitingForResponse = true;
-                    } catch (JMSException jmsException) {
-                        jmsException.printStackTrace();
-                    }
-                }
-            }
-        });
-    }
-
-    protected Thread getAvailabilityThread() {
-        return new Thread(() -> {
-            while (true) {
-                if (criticalAvailable) {
-                    synchronized (queueToCritical) {
-                        if (!queueToCritical.isEmpty()) {
-                            try {
-                                grantAccess(queueToCritical.poll());
-                                criticalAvailable = false;
-                            } catch (JMSException jmsException) {
-                                System.out.println("Problem z przydzielaniem dostępu do sekcji krytycznej.");
-                            }
-                        }
-                    }
-                }
+            String[] nodes = {"A", "B", "C", "D", "E", "F"};
+            sleepRandomTime();
+            for (String n : nodes) {
                 try {
-                    Thread.sleep(100);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
+                    if (!n.equals(COORDINATOR))
+                        giveJob(n);
+                    Thread.sleep(1800);
+                } catch (JMSException | InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -244,12 +180,9 @@ public abstract class BaseNode extends Thread implements MessageListener {
     @Override
     public void run() {
         if (isCoord) {
-            queueToCritical = new ConcurrentLinkedQueue<>();
-            getAvailabilityThread().start();
-        } else if (isCritical) {
-
+            getJobThread().start();
         } else {
-            getAskingThread().start();
+            ;
         }
     }
 }

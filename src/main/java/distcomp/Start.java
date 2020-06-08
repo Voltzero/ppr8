@@ -60,18 +60,14 @@ public class Start {
             deleteFileOrFolder(activemqData.toPath());
         }
 
-        List<String> nodes = Arrays.asList("A", "B", "C", "D", "E", "F");
-
-        Map<String, Map<String, Integer>> topologyMap = Topology.generateCriticalCoord(nodes);
-
         new Reports().start();
 
-        NodeA a = new NodeA("A", "B");
-        NodeB b = new NodeB("A", "B");
-        NodeC c = new NodeC("A", "B");
-        NodeD d = new NodeD("A", "B");
-        NodeE e = new NodeE("A", "B");
-        NodeF f = new NodeF("A", "B");
+        NodeA a = new NodeA("A");
+        NodeB b = new NodeB("A");
+        NodeC c = new NodeC("A");
+        NodeD d = new NodeD("A");
+        NodeE e = new NodeE("A");
+        NodeF f = new NodeF("A");
 
         b.start();
         c.start();
