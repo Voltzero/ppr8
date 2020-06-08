@@ -169,7 +169,7 @@ public abstract class BaseNode extends Thread implements MessageListener {
                 try {
                     if (!n.equals(COORDINATOR))
                         giveJob(n);
-                    Thread.sleep(1800);
+                    Thread.sleep(500);
                 } catch (JMSException | InterruptedException e) {
                     e.printStackTrace();
                 }
