@@ -204,13 +204,13 @@ public abstract class BaseNode extends Thread implements MessageListener {
         return new Thread(() -> {
             while (true) {
                 sleepRandomTime();
-                try {
-                    if (!waitingForResponse) {
+                if (!waitingForResponse) {
+                    try {
                         askForPermission();
                         waitingForResponse = true;
+                    } catch (JMSException jmsException) {
+                        jmsException.printStackTrace();
                     }
-                } catch (JMSException jmsException) {
-                    jmsException.printStackTrace();
                 }
             }
         });
