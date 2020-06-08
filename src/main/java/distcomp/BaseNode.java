@@ -42,6 +42,7 @@ public abstract class BaseNode extends Thread implements MessageListener {
     protected Queue<String> queueToCritical;
     private volatile boolean waitingForResponse = false;
     private volatile boolean criticalAvailable = true;
+    protected volatile double weight;
 
     public BaseNode() throws JMSException {
         rand = new Random();
@@ -204,13 +205,13 @@ public abstract class BaseNode extends Thread implements MessageListener {
         return new Thread(() -> {
             while (true) {
                 sleepRandomTime();
-                try {
-                    if (!waitingForResponse) {
+                if (!waitingForResponse) {
+                    try {
                         askForPermission();
                         waitingForResponse = true;
+                    } catch (JMSException jmsException) {
+                        jmsException.printStackTrace();
                     }
-                } catch (JMSException jmsException) {
-                    jmsException.printStackTrace();
                 }
             }
         });

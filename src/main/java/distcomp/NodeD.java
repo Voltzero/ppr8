@@ -29,6 +29,22 @@ public class NodeD extends BaseNode {
 
     }
 
+    public NodeD(String COORD) throws JMSException {
+        super();
+
+        nodeID = "D";
+
+        consumerD = session.createConsumer(d);
+        this.COORDINATOR = COORD;
+
+        if (nodeID.equals(COORDINATOR)) {
+            isCoord = true;
+            this.weight = 1d;
+        } else
+            this.weight = 0d;
+
+    }
+
     @Override
     public void run() {
         super.run();
