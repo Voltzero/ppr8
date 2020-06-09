@@ -12,9 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static java.nio.file.FileVisitResult.TERMINATE;
@@ -62,12 +59,14 @@ public class Start {
 
         new Reports().start();
 
-        NodeA a = new NodeA("A");
-        NodeB b = new NodeB("A");
-        NodeC c = new NodeC("A");
-        NodeD d = new NodeD("A");
-        NodeE e = new NodeE("A");
-        NodeF f = new NodeF("A");
+        String coordinator = "B";
+
+        NodeA a = new NodeA(coordinator);
+        NodeB b = new NodeB(coordinator);
+        NodeC c = new NodeC(coordinator);
+        NodeD d = new NodeD(coordinator);
+        NodeE e = new NodeE(coordinator);
+        NodeF f = new NodeF(coordinator);
 
         b.start();
         c.start();

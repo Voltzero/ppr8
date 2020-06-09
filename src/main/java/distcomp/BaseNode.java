@@ -72,10 +72,10 @@ public abstract class BaseNode extends Thread implements MessageListener {
         if (isCoord) {
             try {
                 if (message.propertyExists("Done")) {
-                    this.weight += message.getDoubleProperty("Done");
+                    weight += message.getDoubleProperty("Done");
                     sendReport("Coordinator " + nodeID + " has received DONE from " + message.getStringProperty("NodeID") + " with weight: " + message.getDoubleProperty("Done"));
                     if (weight == 1d) {
-                        sendReport("\n\t\t\t\t\tCoordinator " + nodeID + " has finished distributed calculating... Let's do another round\n");
+                        sendReport("\n\t\t\t\t\tCoordinator " + nodeID + " has finished distributed calculating ["+ weight +"]... Let's do another round\n");
                         getJobThread().start();
                     }
                 }
@@ -85,7 +85,7 @@ public abstract class BaseNode extends Thread implements MessageListener {
         } else {
             try {
                 if (message.propertyExists("Job")) {
-                    this.weight = message.getDoubleProperty("Job");
+                    weight = message.getDoubleProperty("Job");
                     sendReport(nodeID + " has received JOB with weight " + weight);
                     sleepRandomTime();
                     notifyCoord();
@@ -106,7 +106,7 @@ public abstract class BaseNode extends Thread implements MessageListener {
         ms.setDoubleProperty("Done", weight);
         ms.setStringProperty("NodeID", nodeID);
         messenger(ms, COORDINATOR);
-        this.weight = 0;
+        weight = 0;
     }
 
     private void giveJob(String node) throws JMSException {
@@ -114,7 +114,7 @@ public abstract class BaseNode extends Thread implements MessageListener {
         do {
             w = rand.nextDouble();
         } while (w >= weight);
-        this.weight -= w;
+        weight -= w;
         Message ms = session.createTextMessage();
         ms.setDoubleProperty("Job", w);
         messenger(ms, node);
